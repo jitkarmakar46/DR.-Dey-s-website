@@ -1,0 +1,176 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const validator = require('validator');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const db = require('./database');
+
+const app = express();
+const PORT = process.env.PORT || 5005;
+const JWT_SECRET = 'super_secret_jwt_key_for_dr_dey_clinic'; // In production, move to .env
+
+// 1. SECURITY HEADER MIDDLEWARE
+app.use(helmet());
+
+// 2. RESTRICTED CORS
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '10kb' }));
+
+// 3. RATE LIMITING
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 50, 
+    message: { error: 'Too many requests from this IP, please try again later.' }
+});
+app.use('/api/', apiLimiter);
+
+// --- AUTHENTICATION MIDDLEWARE ---
+const verifyToken = (req, res, next) => {
+    const bearerHeader = req.headers['authorization'];
+    if (!bearerHeader) return res.status(401).json({ error: 'Access denied' });
+    
+    const token = bearerHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Invalid token' });
+        req.user = decoded;
+        next();
+    });
+};
+
+// --- ROUTES ---
+
+// Login route for Admin (Secure DB check)
+app.post('/api/login', (req, res) => {
+    const { password } = req.body;
+    
+    db.get(`SELECT * FROM admin_users WHERE username = 'admin'`, [], (err, user) => {
+        if (err || !user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const isValid = bcrypt.compareSync(password, user.password_hash);
+        if (isValid) {
+            const token = jwt.sign({ role: 'admin', id: user.id }, JWT_SECRET, { expiresIn: '8h' });
+            res.json({ token });
+        } else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
+    });
+});
+
+// Admin change password route (for complete security, can be used later)
+app.put('/api/admin/password', verifyToken, (req, res) => {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+    }
+    const hash = bcrypt.hashSync(newPassword, 10);
+    db.run(`UPDATE admin_users SET password_hash = ? WHERE username = 'admin'`, [hash], function(err) {
+        if (err) return res.status(500).json({ error: 'Internal server error' });
+        res.json({ message: 'Password updated securely.' });
+    });
+});
+
+// Track appointment publicly
+app.get('/api/appointments/track/:trackingId', (req, res) => {
+    const { trackingId } = req.params;
+    db.get(`SELECT patientName, department, date, time, status FROM appointments WHERE trackingId = ?`, [trackingId], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        if (!row) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+        res.json({ appointment: row });
+    });
+});
+
+// Get all appointments (PROTECTED)
+app.get('/api/appointments', verifyToken, (req, res) => {
+    db.all("SELECT * FROM appointments ORDER BY date DESC, id DESC", [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ appointments: rows });
+    });
+});
+
+// Create a new appointment (PUBLIC)
+app.post('/api/appointments', (req, res) => {
+    let { patientName, phone, department, date, time } = req.body;
+    
+    if (!patientName || !phone || !department || !date || !time) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    patientName = validator.escape(patientName.trim());
+    department = validator.escape(department.trim());
+    date = validator.escape(date.trim());
+    time = validator.escape(time.trim());
+
+    if (!validator.isMobilePhone(phone, 'en-IN')) {
+        return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+    
+    if (patientName.length > 100 || department.length > 50) {
+        return res.status(400).json({ error: 'Input too long' });
+    }
+
+    // Generate Tracking ID (e.g. DEY-A1B2C)
+    const trackingId = 'DEY-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+
+    const sql = `INSERT INTO appointments (trackingId, patientName, phone, department, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')`;
+    db.run(sql, [trackingId, patientName, phone, department, date, time], function(err) {
+        if (err) {
+            console.error('DB Error:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.status(201).json({ 
+            message: 'Appointment booked successfully', 
+            appointmentId: this.lastID,
+            trackingId: trackingId
+        });
+    });
+});
+
+// Update appointment status (PROTECTED)
+app.put('/api/appointments/:id/status', verifyToken, (req, res) => {
+    const { status } = req.body;
+    const { id } = req.params;
+
+    if (!['Pending', 'Confirmed', 'Completed', 'Cancelled'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const sql = `UPDATE appointments SET status = ? WHERE id = ?`;
+    db.run(sql, [status, id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ message: 'Status updated successfully', changes: this.changes });
+    });
+});
+
+// Delete appointment (PROTECTED)
+app.delete('/api/appointments/:id', verifyToken, (req, res) => {
+    const { id } = req.params;
+    const sql = `DELETE FROM appointments WHERE id = ?`;
+    db.run(sql, [id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ message: 'Appointment deleted successfully', changes: this.changes });
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Secure Server running on http://localhost:${PORT}`);
+});
