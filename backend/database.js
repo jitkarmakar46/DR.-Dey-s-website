@@ -9,7 +9,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     } else {
         console.log('Connected to the SQLite database.');
         
-        // Create appointments table
+        // Create appointments table (with createdAt for accurate booking timestamps)
         db.run(`CREATE TABLE IF NOT EXISTS appointments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             trackingId TEXT UNIQUE,
@@ -18,12 +18,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
             department TEXT NOT NULL,
             date TEXT NOT NULL,
             time TEXT NOT NULL,
-            status TEXT DEFAULT 'Pending'
+            status TEXT DEFAULT 'Pending',
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )`, () => {
-            // Safe migration: Add trackingId if it doesn't exist (ignore error if it does)
-            db.run(`ALTER TABLE appointments ADD COLUMN trackingId TEXT UNIQUE`, (err) => {
-                // Ignore error if column already exists
-            });
+            // Safe migration: Add trackingId column if missing (ignore error if already exists)
+            db.run(`ALTER TABLE appointments ADD COLUMN trackingId TEXT UNIQUE`, () => {});
+            // Safe migration: Add createdAt column if missing (existing rows get current timestamp as fallback)
+            db.run(`ALTER TABLE appointments ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
         });
 
         // Create admin_users table

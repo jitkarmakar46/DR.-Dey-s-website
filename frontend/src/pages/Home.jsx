@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award } from 'lucide-react';
+import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy } from 'lucide-react';
 
 const Typewriter = () => {
-    const text1 = "Advanced Healthcare,";
-    const text2 = "Compassionate Healing.";
+    const text1 = "Advanced Healthcare";
+    const text2 = "Compassionate";
+    const text3 = "Healing";
     const [currentText1, setCurrentText1] = useState('');
     const [currentText2, setCurrentText2] = useState('');
-    const [phase, setPhase] = useState(0);
+    const [currentText3, setCurrentText3] = useState('');
+    const [phase, setPhase] = useState(1);
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -17,6 +19,7 @@ const Typewriter = () => {
                 // Restart animation when scrolled into view
                 setCurrentText1('');
                 setCurrentText2('');
+                setCurrentText3('');
                 setPhase(1);
             }
         }, { threshold: 0.5 });
@@ -73,6 +76,7 @@ export default function Home() {
     const [formData, setFormData] = useState({
         department: '', date: '', time: '', patientName: '', phone: ''
     });
+    const [dateType, setDateType] = useState('text');
     const [bookingResult, setBookingResult] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -111,7 +115,7 @@ export default function Home() {
                     setActiveSection(entry.target.id);
                 }
             });
-        }, { threshold: 0.3, rootMargin: '-10% 0px -50% 0px' });
+        }, { threshold: 0.3, rootMargin: '-160px 0px -60% 0px' });
 
         document.querySelectorAll('.section, #home').forEach(section => {
             observer.observe(section);
@@ -150,7 +154,7 @@ export default function Home() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const response = await axios.post('http://localhost:5005/api/appointments', formData);
+            const response = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', formData);
             setBookingResult({
                 name: formData.patientName,
                 trackingId: response.data.trackingId
@@ -169,7 +173,7 @@ export default function Home() {
         setTrackError('');
         setTrackResult(null);
         try {
-            const response = await axios.get(`http://localhost:5005/api/appointments/track/${trackId}`);
+            const response = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${trackId}`);
             setTrackResult(response.data.appointment);
         } catch (err) {
             setTrackError('Could not find an appointment with that Tracking ID.');
@@ -194,17 +198,7 @@ export default function Home() {
     return (
         <div>
 
-            {/* Medical Top Bar */}
-            <div className="top-bar">
-                <div className="container top-bar-container">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Activity size={14} /> Comprehensive Patient Care
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <PhoneCall size={14} /> Clinic Support: +91 98765 43210
-                    </div>
-                </div>
-            </div>
+            
 
             {/* Navbar */}
             <header className="navbar">
@@ -218,8 +212,8 @@ export default function Home() {
                         <nav className="nav-links" ref={navLinksRef}>
                             <a href="#home" data-nav="home" className={activeSection === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Home</a>
                             <a href="#services" data-nav="services" className={activeSection === 'services' ? 'active' : ''} onClick={() => setActiveSection('services')}>Services</a>
-                            <a href="#track" data-nav="track" className={activeSection === 'track' ? 'active' : ''} onClick={() => setActiveSection('track')}>Track Status</a>
-                            <a href="#appointment" data-nav="appointment" className={activeSection === 'appointment' ? 'active' : ''} onClick={() => setActiveSection('appointment')}>Book Appointment</a>
+                            <a href="#track" data-nav="track" className={activeSection === 'track' ? 'active' : ''} onClick={() => setActiveSection('track')}>Track</a>
+                            <a href="#appointment" data-nav="appointment" className={activeSection === 'appointment' ? 'active' : ''} onClick={() => setActiveSection('appointment')}>Book</a>
                         </nav>
                         
                         {/* The Animated Glass Pill */}
@@ -241,31 +235,13 @@ export default function Home() {
                     <div className="hero-content">
                         <Typewriter />
                         <p>Providing expert general medicine for over 15 years. Schedule a consultation and experience truly personalized medical attention.</p>
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <div className="hero-buttons" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                             <a href="#appointment" className="btn btn-primary">
                                 Schedule Visit <ChevronRight size={16} style={{marginLeft: '6px'}}/>
                             </a>
                             <a href="#track" className="btn btn-secondary">Check Status</a>
                         </div>
-
-                        {/* Trust Indicators */}
-                        <div className="trust-badges">
-                            <div className="trust-badge">
-                                <ShieldCheck size={20} color="var(--medical-green)" /> 
-                                Certified Professional
-                            </div>
-                            <div className="trust-badge">
-                                <Award size={20} color="var(--medical-blue)" /> 
-                                15+ Years Experience
-                            </div>
-                            <div className="trust-badge">
-                                <Clock size={20} color="var(--medical-blue)" /> 
-                                Flexible Timings
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                            </div></div></section>
 
             {/* Services Section */}
             <section id="services" className="section">
@@ -355,7 +331,7 @@ export default function Home() {
                                     <div className="form-group">
                                         <label>Medical Department</label>
                                         <select className="form-control" required value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
-                                            <option value="" disabled>Select Concern</option>
+                                            <option value="" disabled>Select Concern &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
                                             <option value="General Checkup">General Checkup</option>
                                             <option value="Fever">Fever / Infection</option>
                                             <option value="Diabetes">Diabetes Follow-up</option>
@@ -363,12 +339,12 @@ export default function Home() {
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Date</label>
-                                        <input type="date" className="form-control" required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                                        <input type={dateType} placeholder="Select Date" onFocus={() => setDateType('date')} onBlur={(e) => {if(!e.target.value) setDateType('text')}} className="form-control" required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Time Slot</label>
                                         <select className="form-control" required value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})}>
-                                            <option value="" disabled>Select Time Slot</option>
+                                            <option value="" disabled>Select Time Slot &nbsp;&nbsp;&nbsp;&nbsp;</option>
                                             <option value="Morning">Morning (10:00 AM - 1:00 PM)</option>
                                             <option value="Evening">Evening (6:00 PM - 9:00 PM)</option>
                                         </select>
@@ -404,7 +380,12 @@ export default function Home() {
                                     
                                     <div className="tracker-box">
                                         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--medical-blue)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Your Tracking ID</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '0.05em', margin: '8px 0' }}>{bookingResult.trackingId}</div>
+                                        <div className="tracking-id-container">
+                                            <div className="tracking-id-text">{bookingResult.trackingId}</div>
+                                            <button type="button" onClick={() => { navigator.clipboard.writeText(bookingResult.trackingId); alert('Tracking ID Copied!'); }} className="copy-btn">
+                                                <Copy size={16} /> <span style={{ marginLeft: '6px', fontSize: '0.9rem', fontWeight: 600 }}>Copy</span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <button type="button" className="btn btn-secondary" style={{ width: '100%', marginTop: '32px' }} onClick={resetForm}>Book Another Visit</button>

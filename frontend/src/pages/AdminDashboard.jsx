@@ -22,7 +22,7 @@ export default function AdminDashboard() {
 
     const fetchAppointments = useCallback(async () => {
         try {
-            const res = await axios.get('http://localhost:5005/api/appointments', {
+            const res = await axios.get('https://doctor-s-backend-2.onrender.com/api/appointments', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAppointments(res.data.appointments);
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5005/api/login', { password });
+            const res = await axios.post('https://doctor-s-backend-2.onrender.com/api/login', { password });
             const jwtToken = res.data.token;
             setToken(jwtToken);
             localStorage.setItem('adminToken', jwtToken);
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
 
     const updateStatus = async (id, status) => {
         try {
-            await axios.put(`http://localhost:5005/api/appointments/${id}/status`, { status }, {
+            await axios.put(`https://doctor-s-backend-2.onrender.com/api/appointments/${id}/status`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchAppointments(); // Refresh data
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
     const deleteAppointment = async (id) => {
         if (!window.confirm('Are you sure you want to permanently delete this appointment log? This cannot be undone.')) return;
         try {
-            await axios.delete(`http://localhost:5005/api/appointments/${id}`, {
+            await axios.delete(`https://doctor-s-backend-2.onrender.com/api/appointments/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchAppointments(); // Refresh data

@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const db = require('./database');
 
 const app = express();
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 5005;
 const JWT_SECRET = 'super_secret_jwt_key_for_dr_dey_clinic'; // In production, move to .env
 
@@ -17,7 +19,7 @@ app.use(helmet());
 
 // 2. RESTRICTED CORS
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -27,7 +29,7 @@ app.use(express.json({ limit: '10kb' }));
 // 3. RATE LIMITING
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
-    max: 50, 
+    max: 200,   // Increased from 50 — admin polls every 15s, needs headroom
     message: { error: 'Too many requests from this IP, please try again later.' }
 });
 app.use('/api/', apiLimiter);
@@ -93,9 +95,9 @@ app.get('/api/appointments/track/:trackingId', (req, res) => {
     });
 });
 
-// Get all appointments (PROTECTED)
+// Get all appointments (PROTECTED) — returns createdAt so frontend can sort by actual submission time
 app.get('/api/appointments', verifyToken, (req, res) => {
-    db.all("SELECT * FROM appointments ORDER BY date DESC, id DESC", [], (err, rows) => {
+    db.all("SELECT id, trackingId, patientName, phone, department, date, time, status, createdAt FROM appointments ORDER BY createdAt ASC", [], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: 'Internal server error' });
         }
@@ -127,8 +129,10 @@ app.post('/api/appointments', (req, res) => {
     // Generate Tracking ID (e.g. DEY-A1B2C)
     const trackingId = 'DEY-' + crypto.randomBytes(3).toString('hex').toUpperCase();
 
-    const sql = `INSERT INTO appointments (trackingId, patientName, phone, department, date, time, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')`;
-    db.run(sql, [trackingId, patientName, phone, department, date, time], function(err) {
+    // Store createdAt explicitly so it's always the exact moment the booking was submitted
+    const createdAt = new Date().toISOString();
+    const sql = `INSERT INTO appointments (trackingId, patientName, phone, department, date, time, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?)`;
+    db.run(sql, [trackingId, patientName, phone, department, date, time, createdAt], function(err) {
         if (err) {
             console.error('DB Error:', err);
             return res.status(500).json({ error: 'Internal server error' });
@@ -136,7 +140,8 @@ app.post('/api/appointments', (req, res) => {
         res.status(201).json({ 
             message: 'Appointment booked successfully', 
             appointmentId: this.lastID,
-            trackingId: trackingId
+            trackingId: trackingId,
+            createdAt: createdAt
         });
     });
 });
