@@ -487,12 +487,12 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
     .form-control { padding: 11px 13px !important; font-size: 0.9rem !important; border-radius: 12px !important; }
     .glass-panel .btn { padding: 13px 0 !important; font-size: 0.78rem !important; }
 
-    .tracker-box { padding: 22px 14px !important; width: 100%; max-width: 420px; border-radius: 22px !important; }
-    .tracker-box h2 { font-size: 1.4rem !important; }
-    .tracker-box p { font-size: 0.84rem !important; }
-    .tracking-id-container { flex-direction: column !important; gap: 10px !important; padding: 12px !important; }
-    .tracking-id-text { font-size: 1.3rem !important; }
-    .copy-btn { width: 100% !important; padding: 12px 0 !important; }
+    .tracker-box { padding: 16px 14px !important; width: 100%; max-width: 420px; border-radius: 18px !important; }
+    .tracker-box h2 { font-size: 1.3rem !important; }
+    .tracker-box p { font-size: 0.82rem !important; }
+    .tracking-id-container { flex-direction: row !important; justify-content: space-between !important; align-items: center !important; gap: 10px !important; padding: 10px 14px !important; }
+    .tracking-id-text { font-size: 1.25rem !important; }
+    .copy-btn { width: auto !important; padding: 8px 18px !important; font-size: 0.82rem !important; border-radius: 10px !important; flex-shrink: 0 !important; }
     .section > .container { justify-content: center !important; gap: 20px !important; }
 
     .footer { padding: 20px 0 !important; }
