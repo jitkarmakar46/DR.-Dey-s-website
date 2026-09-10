@@ -457,8 +457,9 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
         align-items: center;
         justify-content: center;
         gap: 0;
-        padding: 20px 18px !important;
+        padding: 12px 16px !important;
         width: 100%;
+        box-sizing: border-box;
     }
 
     /* Hero on mobile */
@@ -469,7 +470,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
     .hero-buttons { flex-direction: row !important; gap: 14px !important; justify-content: center !important; width: 100% !important; flex-wrap: nowrap !important; }
     .hero-buttons .btn { flex: 1 !important; min-width: 0 !important; max-width: 162px !important; padding: 14px 8px !important; font-size: 0.73rem !important; white-space: nowrap !important; }
 
-    .section-title { font-size: 1.95rem !important; margin-bottom: 0 !important; }
+    .section-title { font-size: 1.8rem !important; margin-bottom: 0 !important; }
 
     .services-grid { display: grid; grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; width: 100%; flex-grow: 1; margin: 14px 0; }
     .service-card { padding: 14px 10px !important; height: 100%; justify-content: center; border-radius: 18px; }
@@ -478,13 +479,13 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
     .service-card h3 { font-size: 0.88rem !important; margin-bottom: 4px !important; }
     .service-card p { font-size: 0.76rem !important; line-height: 1.45 !important; }
 
-    .glass-panel { width: 100%; max-width: 420px; padding: 26px 16px !important; border-radius: 22px !important; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 32px rgba(0,0,0,0.05) !important; }
-    .glass-panel h2 { font-size: 1.5rem !important; margin-bottom: 6px !important; }
-    .glass-panel p { font-size: 0.84rem !important; margin-bottom: 16px !important; }
-    .form-group { margin-bottom: 13px !important; }
-    .form-group label { font-size: 0.7rem !important; }
-    .form-control { padding: 12px 14px !important; font-size: 0.92rem !important; border-radius: 12px !important; }
-    .glass-panel .btn { padding: 14px 0 !important; font-size: 0.78rem !important; }
+    .glass-panel { width: 100%; max-width: 420px; padding: 20px 16px !important; border-radius: 20px !important; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 32px rgba(0,0,0,0.05) !important; box-sizing: border-box; }
+    .glass-panel h2 { font-size: 1.35rem !important; margin-bottom: 4px !important; }
+    .glass-panel p { font-size: 0.82rem !important; margin-bottom: 12px !important; }
+    .form-group { margin-bottom: 12px !important; }
+    .form-group label { font-size: 0.68rem !important; }
+    .form-control { padding: 11px 13px !important; font-size: 0.9rem !important; border-radius: 12px !important; }
+    .glass-panel .btn { padding: 13px 0 !important; font-size: 0.78rem !important; }
 
     .tracker-box { padding: 22px 14px !important; width: 100%; max-width: 420px; border-radius: 22px !important; }
     .tracker-box h2 { font-size: 1.4rem !important; }

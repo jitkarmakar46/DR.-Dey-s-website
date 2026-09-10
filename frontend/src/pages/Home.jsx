@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, ChevronDown, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy } from 'lucide-react';
+import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, ChevronDown, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy, X } from 'lucide-react';
 
 const Typewriter = () => {
     const text1 = "Advanced";
@@ -448,52 +448,74 @@ export default function Home() {
                 <div className="container">
                     <h2 className="section-title">Track Status<span className="title-dot">.</span></h2>
                     <div className="glass-panel clinical-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        <h2 style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: 600 }}>Track Appointment</h2>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontWeight: 500, fontSize: '1.05rem', lineHeight: '1.6' }}>Enter your secure tracking ID to instantly view the real-time status of your medical consultation.</p>
+                        <h2 style={{ marginBottom: !trackResult ? '12px' : '6px', color: 'var(--text-primary)', fontSize: '1.4rem', fontWeight: 700 }}>Track Appointment</h2>
+                        {!trackResult ? (
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontWeight: 500, fontSize: '0.96rem', lineHeight: '1.5' }}>
+                                Enter your secure tracking ID to instantly view your real-time consultation status.
+                            </p>
+                        ) : (
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '14px', fontWeight: 500, fontSize: '0.85rem' }}>
+                                Real-time consultation details for ID: <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{trackResult.trackingId || trackId}</strong>
+                            </p>
+                        )}
                         
-                        <form onSubmit={handleTrack} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                            <input 
-                                type="text" 
-                                className="form-control" 
-                                placeholder="e.g. DEY-A1B2C" 
-                                value={trackId}
-                                onChange={e => setTrackId(e.target.value.toUpperCase())}
-                                required 
-                                style={{ width: '100%', textAlign: 'center', fontSize: '1.1rem', letterSpacing: '0.05em' }}
-                            />
-                            <button type="submit" className="btn btn-primary" style={{ width: '100%', gap: '8px' }}><Search size={18} /> Track Status</button>
-                        </form>
-
-                        {trackError && <div className="clinical-card" style={{ color: '#c5221f', padding: '16px', border: '1px solid #fad2cf', background: 'rgba(252, 232, 230, 0.8)', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500 }}>{trackError}</div>}
+                        {trackError && (
+                            <div className="clinical-card" style={{ color: '#c5221f', padding: '14px 18px', border: '1px solid #fad2cf', background: 'rgba(252, 232, 230, 0.8)', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 600, marginBottom: '16px' }}>
+                                {trackError}
+                            </div>
+                        )}
                         
-                        {trackResult && (
-                            <div className="clinical-card" style={{ padding: '24px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--medical-green)', marginBottom: '18px', background: 'rgba(5, 150, 105, 0.08)', padding: '6px 14px', borderRadius: '50px', width: 'fit-content' }}>
-                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--medical-green)', display: 'inline-block' }}></span> Live Status Sync (Updates Automatically)
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient Name</div>
-                                        <h4 style={{ margin: '4px 0 0', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>{trackResult.patientName}</h4>
+                        {!trackResult ? (
+                            <form onSubmit={handleTrack} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    placeholder="e.g. DEY-A1B2C" 
+                                    value={trackId}
+                                    onChange={e => setTrackId(e.target.value.toUpperCase())}
+                                    required 
+                                    style={{ width: '100%', textAlign: 'center', fontSize: '1.05rem', letterSpacing: '0.06em' }}
+                                />
+                                <button type="submit" className="btn btn-primary" style={{ width: '100%', gap: '8px' }}><Search size={18} /> Track Status</button>
+                            </form>
+                        ) : (
+                            <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '18px', padding: '18px 20px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--medical-green)', background: 'rgba(5, 150, 105, 0.08)', padding: '4px 10px', borderRadius: '50px' }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--medical-green)' }}></span>
+                                        Live Status
                                     </div>
-                                    <span className="status-badge" style={{ ...getStatusStyle(trackResult.status), padding: '6px 16px', borderRadius: '50px', fontSize: '0.86rem', fontWeight: 700 }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setTrackResult(null); setTrackError(''); }}
+                                        style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50px', padding: '4px 12px', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                        <X size={12} /> New Search
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #f1f5f9', marginBottom: '12px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Patient</div>
+                                        <h4 style={{ margin: '2px 0 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>{trackResult.patientName}</h4>
+                                    </div>
+                                    <span className="status-badge" style={{ ...getStatusStyle(trackResult.status), padding: '4px 12px', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700 }}>
                                         {trackResult.status}
                                     </span>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc', paddingBottom: '10px' }}>
-                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>Scheduled Date</span>
-                                        <strong style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>📅 {trackResult.date}</strong>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.86rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#64748b', fontWeight: 600 }}>Scheduled Date</span>
+                                        <strong style={{ color: '#0f172a', fontWeight: 700 }}>📅 {trackResult.date}</strong>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc', paddingBottom: '10px' }}>
-                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>Consultation Slot</span>
-                                        <strong style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>🕒 {trackResult.time}</strong>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#64748b', fontWeight: 600 }}>Consultation Slot</span>
+                                        <strong style={{ color: '#0f172a', fontWeight: 700 }}>🕒 {trackResult.time}</strong>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px', gap: '16px' }}>
-                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600, flexShrink: 0 }}>Medical Concern</span>
-                                        <strong style={{ color: '#0284c7', fontSize: '0.95rem', fontWeight: 700, textAlign: 'right', wordBreak: 'break-word', maxWidth: '65%' }}>
-                                            {trackResult.department}
-                                        </strong>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#64748b', fontWeight: 600 }}>Medical Concern</span>
+                                        <strong style={{ color: '#0284c7', fontWeight: 700 }}>🏥 {trackResult.department}</strong>
                                     </div>
                                 </div>
                             </div>
