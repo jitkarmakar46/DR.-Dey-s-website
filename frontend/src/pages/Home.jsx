@@ -577,22 +577,33 @@ export default function Home() {
                             )}
 
                             {step === 3 && bookingResult && (
-                                <div style={{ textAlign: 'center' }}>
-                                    <CheckCircle size={48} color="var(--medical-green)" style={{ margin: '0 auto 24px' }} />
-                                    <h3 style={{ marginBottom: '16px', fontSize: '1.25rem', fontWeight: 600 }}>Request Received</h3>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Thank you, {bookingResult.name}. Our clinic has received your request.</p>
+                                <div style={{ textAlign: 'center', padding: '4px 0' }}>
+                                    <CheckCircle size={40} color="var(--medical-green)" style={{ margin: '0 auto 10px' }} />
+                                    <h3 style={{ marginBottom: '6px', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>Request Received</h3>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '14px', fontSize: '0.86rem', lineHeight: 1.4 }}>
+                                        Thank you, {bookingResult.name}. Our clinic has received your request.
+                                    </p>
                                     
-                                    <div className="tracker-box">
-                                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--medical-blue)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Your Tracking ID</div>
-                                        <div className="tracking-id-container">
-                                            <div className="tracking-id-text">{bookingResult.trackingId}</div>
-                                            <button type="button" onClick={() => { navigator.clipboard.writeText(bookingResult.trackingId); alert('Tracking ID Copied!'); }} className="copy-btn">
-                                                <Copy size={16} /> <span style={{ marginLeft: '6px', fontSize: '0.9rem', fontWeight: 600 }}>Copy</span>
+                                    <div className="tracker-box" style={{ padding: '14px 12px', margin: '0 auto 16px', borderRadius: '16px' }}>
+                                        <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--medical-blue)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                                            Your Tracking ID
+                                        </div>
+                                        <div className="tracking-id-container" style={{ margin: '0 auto', padding: '10px 14px', maxWidth: '320px', width: '100%', gap: '8px' }}>
+                                            <div className="tracking-id-text" style={{ fontSize: '1.25rem', letterSpacing: '0.05em' }}>{bookingResult.trackingId}</div>
+                                            <button type="button" onClick={() => { navigator.clipboard.writeText(bookingResult.trackingId); alert('Tracking ID Copied!'); }} className="copy-btn" style={{ padding: '8px 16px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Copy size={14} /> Copy
                                             </button>
                                         </div>
                                     </div>
 
-                                    <button type="button" className="btn btn-secondary" style={{ width: '100%', marginTop: '32px' }} onClick={resetForm}>Book Another Visit</button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-secondary" 
+                                        style={{ width: '100%', padding: '12px 0', fontSize: '0.84rem', fontWeight: 700, borderRadius: '50px' }} 
+                                        onClick={resetForm}
+                                    >
+                                        Book Another Visit
+                                    </button>
                                 </div>
                             )}
                         </form>
