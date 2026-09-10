@@ -288,19 +288,34 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
    SECTIONS GLOBAL
    ============================================================ */
 .section {
-    padding: 80px 0;
+    min-height: calc(100vh - var(--top-h));
+    padding: 30px 0 90px 0;
     position: relative;
     z-index: 10;
     scroll-margin-top: var(--top-h);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
 }
+
+.section > .container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .section-title {
     font-family: var(--serif);
-    font-size: 3rem;
+    font-size: 2.6rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     color: var(--text);
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 28px;
     line-height: 1.1;
 }
 .title-dot { color: var(--blue); }
@@ -311,7 +326,8 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
 .hero {
     position: relative;
     z-index: 10;
-    height: var(--page-h);
+    min-height: calc(100vh - var(--top-h));
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -319,6 +335,8 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
     scroll-margin-top: var(--top-h);
     overflow: hidden;
     background: transparent;
+    padding: 20px 0 90px 0;
+    box-sizing: border-box;
 }
 
 /* Noise texture for premium depth */
@@ -612,14 +630,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     body { padding-top: var(--top-h) !important; padding-bottom: calc(64px + 32px) !important; }
 
     .section, .hero {
-        min-height: calc(100vh - var(--top-h));
+        min-height: calc(100vh - var(--top-h) - 30px);
         height: auto !important;
-        padding: 40px 0 !important;
+        padding: 20px 0 85px 0 !important;
         overflow: visible !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center;
         background: transparent !important;
+        box-sizing: border-box;
     }
     .section > .container, .hero > .container {
         flex-grow: 1;
@@ -673,19 +692,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .service-card p { font-size: 0.76rem !important; line-height: 1.45 !important; }
 
     .glass-panel {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(240, 248, 255, 0.62) 100%) !important;
-    backdrop-filter: blur(24px) saturate(185%) contrast(106%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(185%) contrast(106%) !important;
-    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
-    border-radius: 24px !important;
-    padding: 48px;
-    box-shadow: 
-        inset 0 1.5px 1px 0 rgba(255, 255, 255, 1),
-        inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.35),
-        0 20px 50px -10px rgba(0, 70, 150, 0.1),
-        0 4px 12px rgba(0, 0, 0, 0.03) !important;
-    max-width: 600px; margin: 0 auto;
-}
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(240, 248, 255, 0.62) 100%) !important;
+        backdrop-filter: blur(24px) saturate(185%) contrast(106%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(185%) contrast(106%) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+        border-radius: 24px !important;
+        padding: 22px 18px !important;
+        box-shadow: 
+            inset 0 1.5px 1px 0 rgba(255, 255, 255, 1),
+            inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.35),
+            0 20px 50px -10px rgba(0, 70, 150, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        max-width: 600px; 
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
     .glass-panel h2 { font-size: 1.35rem !important; margin-bottom: 4px !important; }
     .glass-panel p { font-size: 0.82rem !important; margin-bottom: 12px !important; }
     .form-group { margin-bottom: 12px !important; }
