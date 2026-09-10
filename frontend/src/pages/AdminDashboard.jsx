@@ -1128,7 +1128,9 @@ export default function AdminDashboard() {
                                         background: '#f1f5f9', 
                                         padding: '4px', 
                                         borderRadius: '12px',
-                                        width: isMobile ? '100%' : 'fit-content'
+                                        width: isMobile ? '100%' : 'fit-content',
+                                        position: 'relative',
+                                        zIndex: 20
                                     }}>
                                         {/* Button 1: All Appointments */}
                                         <button
@@ -1151,7 +1153,9 @@ export default function AdminDashboard() {
                                                 background: appointmentViewMode === 'all' ? '#0284c7' : 'transparent',
                                                 color: appointmentViewMode === 'all' ? '#ffffff' : '#475569',
                                                 boxShadow: appointmentViewMode === 'all' ? '0 2px 6px rgba(2, 132, 199, 0.25)' : 'none',
-                                                transition: 'all 0.15s'
+                                                transition: 'all 0.15s',
+                                                position: 'relative',
+                                                zIndex: 20
                                             }}
                                         >
                                             <Calendar size={14} /> 
@@ -1180,7 +1184,9 @@ export default function AdminDashboard() {
                                                 background: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '#7c3aed' : 'transparent',
                                                 color: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '#ffffff' : '#475569',
                                                 boxShadow: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '0 2px 6px rgba(124, 58, 237, 0.25)' : 'none',
-                                                transition: 'all 0.15s'
+                                                transition: 'all 0.15s',
+                                                position: 'relative',
+                                                zIndex: 20
                                             }}
                                         >
                                             <CalendarCheck size={14} /> 
@@ -1209,7 +1215,9 @@ export default function AdminDashboard() {
                                                 background: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '#7c3aed' : 'transparent',
                                                 color: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '#ffffff' : '#475569',
                                                 boxShadow: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '0 2px 6px rgba(124, 58, 237, 0.25)' : 'none',
-                                                transition: 'all 0.15s'
+                                                transition: 'all 0.15s',
+                                                position: 'relative',
+                                                zIndex: 20
                                             }}
                                         >
                                             <Clock size={14} /> 
@@ -1227,7 +1235,9 @@ export default function AdminDashboard() {
                                             display: 'flex', 
                                             flexDirection: 'column', 
                                             gap: '10px',
-                                            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)'
+                                            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.04)',
+                                            position: 'relative',
+                                            zIndex: 1
                                         }}>
                                             {/* Header strip: Active Filter label + Count + Clear */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
@@ -1271,9 +1281,10 @@ export default function AdminDashboard() {
                                                 gap: '8px' 
                                             }}>
                                                 {/* Clean Date Picker Input */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: isMobile ? 'none' : '0 0 280px' }}>
+                                                <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '8px', flex: isMobile ? 'none' : '0 0 280px' }}>
                                                     <input 
                                                         type="date"
+                                                        className="admin-date-input"
                                                         value={selectedDateFilter || ''}
                                                         onChange={(e) => setSelectedDateFilter(e.target.value)}
                                                         style={{
@@ -1286,7 +1297,9 @@ export default function AdminDashboard() {
                                                             padding: '8px 12px',
                                                             color: '#0f172a',
                                                             outline: 'none',
-                                                            boxSizing: 'border-box'
+                                                            boxSizing: 'border-box',
+                                                            position: 'relative',
+                                                            zIndex: 1
                                                         }}
                                                     />
                                                 </div>
