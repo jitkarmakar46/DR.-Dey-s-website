@@ -34,7 +34,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--sans); -webkit-tap-highlight-color: transparent !important; }
 html {
-    scroll-behavior: auto;
+    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
 }
 
@@ -289,7 +289,8 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
    ============================================================ */
 .section {
     min-height: calc(100vh - var(--top-h));
-    padding: 30px 0 90px 0;
+    min-height: calc(100dvh - var(--top-h));
+    padding: 40px 0;
     position: relative;
     z-index: 10;
     scroll-margin-top: var(--top-h);
@@ -327,6 +328,7 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
     position: relative;
     z-index: 10;
     min-height: calc(100vh - var(--top-h));
+    min-height: calc(100dvh - var(--top-h));
     height: auto;
     display: flex;
     align-items: center;
@@ -335,7 +337,7 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
     scroll-margin-top: var(--top-h);
     overflow: hidden;
     background: transparent;
-    padding: 20px 0 90px 0;
+    padding: 30px 0;
     box-sizing: border-box;
 }
 
@@ -560,7 +562,7 @@ input::placeholder, select:invalid, textarea::placeholder {
 /* Custom styled Date Input */
 input[type="date"].date-placeholder { color: transparent !important; position: relative; cursor: pointer; }
 input[type="date"].date-placeholder::before {
-    content: 'Select Date ▾';
+    content: 'Select Date';
     color: #64748b !important;
     opacity: 0.85 !important;
     font-family: var(--sans) !important;
