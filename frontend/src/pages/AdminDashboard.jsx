@@ -123,85 +123,113 @@ export default function AdminDashboard() {
         localStorage.removeItem('adminToken');
     }, []);
 
+    // Safe comparison: matching trackingId or exact appointment details (never comparing arbitrary integer IDs)
+    const isSameAppointment = (a, b) => {
+        if (!a || !b) return false;
+        if (a.trackingId && b.trackingId) {
+            return a.trackingId === b.trackingId;
+        }
+        return a.patientName === b.patientName && a.phone === b.phone && a.date === b.date && a.time === b.time;
+    };
+
     const fetchAppointments = useCallback(async (isSilent = false, onProgress = null) => {
         const savedCache = JSON.parse(localStorage.getItem('admin_appointments_cache') || '[]');
         const savedTimestamps = JSON.parse(localStorage.getItem('clinic_booking_timestamps') || '{}');
         const activeToken = token || localStorage.getItem('adminToken');
 
         if (!activeToken) {
-            if (!isSilent) setLoading(false);
+            setLoading(false);
+            setIsSyncing(false);
             return null;
         }
 
-        if (!isSilent) setIsSyncing(true);
+        if (!isSilent) {
+            setIsSyncing(true);
+        }
 
         const maxAttempts = 3;
         let lastError = null;
 
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                if (attempt > 1 && typeof onProgress === 'function') {
-                    onProgress(`Syncing with server database... (Connecting attempt ${attempt}/${maxAttempts})`);
-                }
+        try {
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    if (attempt > 1 && typeof onProgress === 'function') {
+                        onProgress(`Syncing with server database... (Connecting attempt ${attempt}/${maxAttempts})`);
+                    }
 
-                const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
-                    headers: { 
-                        Authorization: `Bearer ${activeToken}`,
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
-                    },
-                    timeout: 25000 // Resilient 25s timeout to gracefully absorb Render free-tier cold starts
-                });
-                
-                if (res.data && Array.isArray(res.data.appointments)) {
-                    // 1. Fresh backend records are ALWAYS the ground truth!
-                    const backendMap = new Map();
-                    res.data.appointments.forEach(item => {
-                        if (item && (item.trackingId || item.id)) {
-                            const key = item.trackingId || `id_${item.id}`;
-                            backendMap.set(key, item);
-                            if (item.trackingId && item.createdAt) {
-                                savedTimestamps[item.trackingId] = item.createdAt;
-                            }
-                        }
+                    const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
+                        headers: { 
+                            Authorization: `Bearer ${activeToken}`,
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        },
+                        timeout: 25000 // Resilient 25s timeout to gracefully absorb Render free-tier cold starts
                     });
+                    
+                    if (res.data && Array.isArray(res.data.appointments)) {
+                        const backendList = res.data.appointments;
+                        const mergedList = [...backendList];
 
-                    // 2. Only preserve saved local records if not present on backend
-                    savedCache.forEach(item => {
-                        if (item && (item.trackingId || item.id)) {
-                            const key = item.trackingId || `id_${item.id}`;
-                            if (!backendMap.has(key)) {
-                                const alreadyInBackend = Array.from(backendMap.values()).some(
-                                    b => (b.trackingId && b.trackingId === item.trackingId) || (b.id && b.id === item.id)
-                                );
-                                if (!alreadyInBackend) {
-                                    backendMap.set(key, item);
+                        // Safely preserve any locally cached records that are not yet on backend
+                        const missingOnBackend = [];
+                        savedCache.forEach(cached => {
+                            if (!cached) return;
+                            const exists = mergedList.some(b => isSameAppointment(cached, b));
+                            if (!exists) {
+                                mergedList.push(cached);
+                                missingOnBackend.push(cached);
+                            }
+                        });
+
+                        // Preserve booking timestamps accurately
+                        mergedList.forEach(item => {
+                            if (item.trackingId) {
+                                if (item.createdAt) {
+                                    savedTimestamps[item.trackingId] = item.createdAt;
+                                } else if (savedTimestamps[item.trackingId]) {
+                                    item.createdAt = savedTimestamps[item.trackingId];
                                 }
                             }
+                        });
+
+                        localStorage.setItem('clinic_booking_timestamps', JSON.stringify(savedTimestamps));
+                        localStorage.setItem('admin_appointments_cache', JSON.stringify(mergedList));
+
+                        setAppointments(mergedList);
+
+                        // If any records existed locally that were missing on backend (e.g. after a server restart/deploy),
+                        // seamlessly sync them to the backend in the background so the server database is restored!
+                        if (missingOnBackend.length > 0) {
+                            axios.post('https://doctor-s-backend-2.onrender.com/api/appointments/sync', {
+                                appointments: missingOnBackend
+                            }, {
+                                headers: { Authorization: `Bearer ${activeToken}` }
+                            }).catch(() => {});
                         }
-                    });
 
-                    const finalLogs = Array.from(backendMap.values());
-                    localStorage.setItem('clinic_booking_timestamps', JSON.stringify(savedTimestamps));
-                    localStorage.setItem('admin_appointments_cache', JSON.stringify(finalLogs));
-
-                    setAppointments(finalLogs);
-                    return finalLogs;
-                }
-            } catch (err) {
-                lastError = err;
-                if (err.response && err.response.status === 401) {
-                    handleLogout();
-                    throw err;
-                }
-                // For transient cold starts, rate limits, or network drops, back off and retry automatically
-                if (attempt < maxAttempts) {
-                    await new Promise(r => setTimeout(r, attempt * 1200));
+                        return mergedList;
+                    }
+                } catch (err) {
+                    lastError = err;
+                    if (err.response && err.response.status === 401) {
+                        handleLogout();
+                        throw err;
+                    }
+                    // For transient cold starts, rate limits, or network drops, back off and retry automatically
+                    if (attempt < maxAttempts) {
+                        await new Promise(r => setTimeout(r, attempt * 1200));
+                    }
                 }
             }
-        }
 
-        throw lastError;
+            if (lastError) {
+                throw lastError;
+            }
+        } finally {
+            // ALWAYS reset sync and loading state so buttons and UI are never stuck
+            setIsSyncing(false);
+            setLoading(false);
+        }
     }, [token, handleLogout]);
 
     const handleManualRefresh = async () => {

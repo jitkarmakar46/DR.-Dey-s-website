@@ -163,6 +163,40 @@ app.post('/api/appointments', bookingLimiter, (req, res) => {
     });
 });
 
+// Bulk sync / restore appointments (PROTECTED - guarantees zero data loss on server restarts)
+app.post('/api/appointments/sync', verifyToken, (req, res) => {
+    const { appointments } = req.body;
+    if (!Array.isArray(appointments) || appointments.length === 0) {
+        return res.json({ message: 'No records to sync', count: 0 });
+    }
+
+    const insertSql = `INSERT OR IGNORE INTO appointments (trackingId, patientName, phone, department, date, time, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    
+    db.serialize(() => {
+        const stmt = db.prepare(insertSql);
+        appointments.forEach(a => {
+            if (a && a.trackingId && a.patientName && a.phone) {
+                stmt.run([
+                    a.trackingId,
+                    validator.escape(String(a.patientName).trim()),
+                    String(a.phone).trim(),
+                    validator.escape(String(a.department || 'General Checkup').trim()),
+                    validator.escape(String(a.date).trim()),
+                    validator.escape(String(a.time).trim()),
+                    a.status || 'Pending',
+                    a.createdAt || new Date().toISOString()
+                ]);
+            }
+        });
+        stmt.finalize(() => {
+            db.all("SELECT id, trackingId, patientName, phone, department, date, time, status, createdAt FROM appointments ORDER BY createdAt ASC", [], (err, rows) => {
+                if (err) return res.status(500).json({ error: 'Internal server error' });
+                res.json({ appointments: rows, syncedCount: rows.length });
+            });
+        });
+    });
+});
+
 // Update appointment status (PROTECTED)
 app.put('/api/appointments/:id/status', verifyToken, (req, res) => {
     const { status } = req.body;

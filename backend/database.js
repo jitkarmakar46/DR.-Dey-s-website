@@ -25,6 +25,21 @@ const db = new sqlite3.Database(dbPath, (err) => {
             db.run(`ALTER TABLE appointments ADD COLUMN trackingId TEXT UNIQUE`, () => {});
             // Safe migration: Add createdAt column if missing (existing rows get current timestamp as fallback)
             db.run(`ALTER TABLE appointments ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
+
+            // Seed initial clinic appointments if table is empty
+            db.get(`SELECT COUNT(*) as count FROM appointments`, [], (err, row) => {
+                if (!err && row && row.count === 0) {
+                    const initialRecords = [
+                        ['DEY-D95E3E', 'jt', '8976789088', 'General Checkup', '2026-09-10', 'Morning', 'Confirmed', '2026-09-10T07:15:00.000Z'],
+                        ['DEY-BC6A5B', 'jiy', '9898767689', 'General Checkup', '2026-09-18', 'Morning', 'Pending', '2026-09-09T08:30:00.000Z'],
+                        ['DEY-40770A', 'joh nor', '9098765645', 'Fever', '2026-09-10', 'Evening', 'Pending', '2026-09-10T07:45:00.000Z']
+                    ];
+                    const seedStmt = db.prepare(`INSERT OR IGNORE INTO appointments (trackingId, patientName, phone, department, date, time, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+                    initialRecords.forEach(r => seedStmt.run(r));
+                    seedStmt.finalize();
+                    console.log('Default appointments seeded successfully.');
+                }
+            });
         });
 
         // Create admin_users table
