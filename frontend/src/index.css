@@ -70,7 +70,7 @@ body::before {
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
 /* ============================================================
-   TOP HEADER — Apple Liquid Glass (Fixed Top Bar)
+   TOP HEADER — Solid Clean Surface (No text reflection)
    ============================================================ */
 .top-header {
     position: fixed;
@@ -83,27 +83,14 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.15) 100%);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-bottom: 1.25px solid rgba(255, 255, 255, 0.85);
-    box-shadow: 
-        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.35),
-        0 8px 24px rgba(0, 40, 100, 0.06);
+    background: #ffffff !important;
+    border-bottom: 1.5px solid var(--border) !important;
+    box-shadow: 0 2px 10px rgba(0, 50, 120, 0.05) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     transform: translate3d(0, 0, 0);
     -webkit-transform: translate3d(0, 0, 0);
-}
-
-.top-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1.5px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 25%, rgba(255, 255, 255, 0.95) 75%, transparent 100%);
-    pointer-events: none;
+    padding: 0 24px;
 }
 
 .logo, .logo-centered {
@@ -477,89 +464,67 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
 .glass-panel p { font-family: var(--sans); font-size: 0.97rem; font-weight: 300; line-height: 1.75; color: var(--text-2); }
 .form-group { margin-bottom: 22px; }
 .form-group label { font-family: var(--sans); font-weight: 700; font-size: 0.75rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-2); margin-bottom: 8px; display: block; }
+/* High Visibility Rectangular Form Inputs (Tracking ID & Consultation Form) */
 .form-control {
     width: 100%;
-    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
-    border-radius: 14px !important;
+    border: 2px solid #94a3b8 !important;
+    border-radius: 12px !important;
     padding: 14px 18px;
     font-family: var(--sans);
     font-size: 1rem;
     font-weight: 500;
     color: var(--text);
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 70, 150, 0.03) !important;
-    transition: all 0.25s ease;
+    background: #ffffff !important;
+    box-shadow: 0 1px 4px rgba(0, 50, 120, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
 }
+
+.form-control:hover {
+    border-color: #64748b !important;
+}
+
 .form-control:focus {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-color: #0284c7 !important;
-    box-shadow: 0 0 0 3.5px rgba(2, 132, 199, 0.18), inset 0 1px 2px rgba(2, 132, 199, 0.05) !important;
+    background: #ffffff !important;
+    border-color: #0077b6 !important;
+    box-shadow: 0 0 0 3.5px rgba(0, 119, 182, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    outline: none !important;
 }
-.form-control:focus { background: var(--surface); border-color: var(--blue); box-shadow: 0 0 0 4px rgba(0,119,182,0.08); outline: none; }
+
+/* Tracking Input Rectangular Box */
+.tracking-input {
+    border: 2px solid #64748b !important;
+    background: #ffffff !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-align: center !important;
+    box-shadow: 0 2px 8px rgba(0, 50, 120, 0.08) !important;
+}
+
+.tracking-input:focus {
+    border-color: #0077b6 !important;
+    box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.20) !important;
+}
 
 /* Input Placeholders & Date Placeholders */
 input::placeholder, select:invalid, textarea::placeholder {
-    color: #94a3b8 !important;
-    opacity: 0.65 !important;
-    font-weight: 400 !important;
+    color: #64748b !important;
+    opacity: 0.85 !important;
+    font-weight: 500 !important;
     font-style: normal !important;
-    -webkit-text-fill-color: #94a3b8 !important;
-}
-
-/* Custom styled Select Dropdowns with crisp modern Chevron */
-select.form-control {
-    width: 100%;
-    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
-    border-radius: 14px !important;
-    padding: 14px 18px;
-    font-family: var(--sans);
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 70, 150, 0.03) !important;
-    transition: all 0.25s ease;
-}
-.form-control:focus {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-color: #0284c7 !important;
-    box-shadow: 0 0 0 3.5px rgba(2, 132, 199, 0.18), inset 0 1px 2px rgba(2, 132, 199, 0.05) !important;
+    -webkit-text-fill-color: #64748b !important;
 }
 
 /* Custom styled Date Input */
-input[type="date"].form-control {
-    width: 100%;
-    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
-    border-radius: 14px !important;
-    padding: 14px 18px;
-    font-family: var(--sans);
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 70, 150, 0.03) !important;
-    transition: all 0.25s ease;
-}
-.form-control:focus {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-color: #0284c7 !important;
-    box-shadow: 0 0 0 3.5px rgba(2, 132, 199, 0.18), inset 0 1px 2px rgba(2, 132, 199, 0.05) !important;
-}
-
-input[type="date"].date-placeholder { color: transparent !important; position: relative; }
+input[type="date"].date-placeholder { color: transparent !important; position: relative; cursor: pointer; }
 input[type="date"].date-placeholder::before {
-    content: 'Select Date';
-    color: #94a3b8 !important;
-    opacity: 0.65 !important;
+    content: 'Select Date ▾';
+    color: #64748b !important;
+    opacity: 0.85 !important;
     font-family: var(--sans) !important;
     font-size: 1rem !important;
-    font-weight: 400 !important;
+    font-weight: 500 !important;
     position: absolute;
     left: 18px;
     top: 50%;
@@ -569,7 +534,16 @@ input[type="date"].date-placeholder::before {
 }
 input[type="date"]:focus { color: var(--text) !important; }
 input[type="date"]:focus::before { display: none; }
-input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%; height: 100%; position: absolute; right: 0; top: 0; cursor: pointer; }
+input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    z-index: 3;
+}
 
 /* Animation for refresh spinner */
 @keyframes spin {
@@ -746,14 +720,50 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
 .desktop-nav a:hover, .desktop-nav a.active { color: var(--blue); }
 /* nav-pill inside desktop-nav inherits the .nav-pill rules already defined */
 
-/* On desktop: top-header space-between, nav right */
+/* On desktop: Dilip Dey Clinic heading in top center, 4 buttons on top right side */
 @media (min-width: 769px) {
     .top-header {
-        justify-content: space-between;
-        padding: 0 40px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: var(--top-h);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 32px;
+        background: #ffffff !important;
+        border-bottom: 1.5px solid var(--border);
+        box-shadow: 0 2px 10px rgba(0, 50, 120, 0.05);
     }
-    /* Logo aligns left on desktop */
-    .logo-centered { margin: 0; }
+
+    /* Logo is centered dead-center in the laptop browser window */
+    .top-header .logo,
+    .top-header .logo-centered {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+
+    /* 4 Nav buttons docked cleanly on the top right side */
+    .desktop-nav {
+        margin-left: auto;
+        display: flex !important;
+        align-items: center;
+        gap: 4px;
+        position: relative;
+        z-index: 11;
+    }
+
+    .desktop-nav a {
+        padding: 8px 16px;
+        font-size: 0.84rem;
+    }
+
     /* Bottom nav is completely hidden on desktop */
     .bottom-nav { display: none !important; }
     body { padding-top: var(--top-h) !important; padding-bottom: 0 !important; }
@@ -762,8 +772,14 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
     .section { scroll-margin-top: var(--top-h) !important; }
 }
 
-/* On mobile: hide desktop nav, center logo in fixed liquid glass top bar */
+/* On mobile: hide desktop nav, center logo cleanly in fixed solid top bar */
 @media (max-width: 768px) {
     .desktop-nav { display: none !important; }
+    .top-header .logo,
+    .top-header .logo-centered {
+        position: static;
+        transform: none;
+        margin: 0 auto;
+    }
     body { padding-top: var(--top-h) !important; padding-bottom: calc(64px + 32px) !important; }
 }

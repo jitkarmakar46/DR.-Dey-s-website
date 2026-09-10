@@ -473,7 +473,7 @@ export default function Home() {
                             <form onSubmit={handleTrack} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <input 
                                     type="text" 
-                                    className="form-control" 
+                                    className="form-control tracking-input" 
                                     placeholder="e.g. DEY-A1B2C" 
                                     value={trackId}
                                     onChange={e => setTrackId(e.target.value.toUpperCase())}
@@ -538,24 +538,53 @@ export default function Home() {
                                 <div>
                                     <div className="form-group">
                                         <label>Medical Department</label>
-                                        <select className="form-control" required value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
-                                            <option value="" disabled>Select Concern</option>
-                                            <option value="General Checkup">General Checkup</option>
-                                            <option value="Fever">Fever / Infection</option>
-                                            <option value="Diabetes">Diabetes Follow-up</option>
-                                        </select>
+                                        <div style={{ position: 'relative' }}>
+                                            <select 
+                                                className="form-control" 
+                                                required 
+                                                value={formData.department} 
+                                                onChange={e => setFormData({...formData, department: e.target.value})}
+                                                style={{ paddingRight: '42px', appearance: 'none', WebkitAppearance: 'none' }}
+                                            >
+                                                <option value="" disabled>Select Concern ▾</option>
+                                                <option value="General Checkup">General Checkup</option>
+                                                <option value="Fever">Fever / Infection</option>
+                                                <option value="Diabetes">Diabetes Follow-up</option>
+                                            </select>
+                                            <ChevronDown size={18} color="#0077b6" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Date</label>
-                                        <input type="date" className={`form-control ${!formData.date ? "date-placeholder" : ""}`} required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                                        <div style={{ position: 'relative' }}>
+                                            <input 
+                                                type="date" 
+                                                className={`form-control ${!formData.date ? "date-placeholder" : ""}`} 
+                                                required 
+                                                min={new Date().toISOString().split('T')[0]} 
+                                                value={formData.date} 
+                                                onChange={e => setFormData({...formData, date: e.target.value})}
+                                                style={{ paddingRight: '42px' }} 
+                                            />
+                                            <ChevronDown size={18} color="#0077b6" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Time Slot</label>
-                                        <select className="form-control" required value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})}>
-                                            <option value="" disabled>Select Time Slot</option>
-                                            <option value="Morning">Morning (10:00 AM - 1:00 PM)</option>
-                                            <option value="Evening">Evening (6:00 PM - 9:00 PM)</option>
-                                        </select>
+                                        <div style={{ position: 'relative' }}>
+                                            <select 
+                                                className="form-control" 
+                                                required 
+                                                value={formData.time} 
+                                                onChange={e => setFormData({...formData, time: e.target.value})}
+                                                style={{ paddingRight: '42px', appearance: 'none', WebkitAppearance: 'none' }}
+                                            >
+                                                <option value="" disabled>Select Time Slot ▾</option>
+                                                <option value="Morning">Morning (10:00 AM - 1:00 PM)</option>
+                                                <option value="Evening">Evening (6:00 PM - 9:00 PM)</option>
+                                            </select>
+                                            <ChevronDown size={18} color="#0077b6" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                        </div>
                                     </div>
                                     <button type="button" className="btn btn-primary" style={{ width: '100%' }} onClick={handleNext}>Proceed to Details</button>
                                 </div>
