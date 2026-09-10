@@ -44,6 +44,8 @@ body {
     position: relative;
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
+    padding-top: var(--top-h);
+    padding-bottom: calc(64px + 32px);
 }
 
 /* GPU-accelerated fixed ambient background — zero repaint penalty during scrolling */
@@ -68,26 +70,29 @@ body::before {
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
 /* ============================================================
-   TOP HEADER — Apple Liquid Glass (Centered logo / desktop flex)
+   TOP HEADER — Apple Liquid Glass (Fixed Top Bar)
    ============================================================ */
 .top-header {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 200;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 998;
     height: var(--top-h);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.14) 100%);
-    backdrop-filter: blur(8px) saturate(240%) contrast(120%) brightness(105%);
-    -webkit-backdrop-filter: blur(8px) saturate(240%) contrast(120%) brightness(105%);
-    border-bottom: 1.5px solid rgba(255, 255, 255, 0.85);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.15) 100%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1.25px solid rgba(255, 255, 255, 0.85);
     box-shadow: 
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95),
         inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.35),
-        0 8px 24px rgba(0, 70, 150, 0.06);
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+        0 8px 24px rgba(0, 40, 100, 0.06);
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
 }
 
 .top-header::before {
@@ -133,28 +138,27 @@ body::before {
     overflow: hidden;
     will-change: transform;
 
-    /* Apple Liquid Glass Material - Translucent with Refractive Luster */
+    /* Apple Liquid Glass Material - 100% Neutral Translucent Water (Zero Color Shift) */
     background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.22) 0%,
-        rgba(255, 255, 255, 0.05) 45%,
-        rgba(202, 240, 248, 0.18) 100%
+        rgba(255, 255, 255, 0.20) 0%,
+        rgba(255, 255, 255, 0.04) 50%,
+        rgba(255, 255, 255, 0.16) 100%
     );
 
     /* Apple Liquid Glass Optical Refraction:
-       Sharp 7px blur preserves text outlines, magnifies letter strokes, and distorts content realistically
-       instead of obliterating text into a foggy smudge. 240% saturation makes underlying text colors shine through */
-    -webkit-backdrop-filter: blur(7px) saturate(240%) contrast(125%) brightness(108%);
-    backdrop-filter: blur(7px) saturate(240%) contrast(125%) brightness(108%);
+       Clean 6px blur softly bends and magnifies shapes without altering the original color of text and icons */
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
 
     /* Liquid Glass Caustic Bevel & Specular Light Highlights */
     border: 1.25px solid rgba(255, 255, 255, 0.85);
     box-shadow: 
         inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),  /* Top liquid meniscus specular reflection */
-        inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.40),   /* Bottom caustic bounce reflection */
+        inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.35),   /* Bottom caustic bounce reflection */
         inset 0 0 16px 0 rgba(255, 255, 255, 0.20),         /* Inner volumetric luminescence */
-        0 14px 34px -4px rgba(0, 50, 120, 0.15),           /* Ambient water-refracted drop shadow */
-        0 4px 12px -2px rgba(0, 0, 0, 0.06);
+        0 14px 34px -4px rgba(0, 40, 100, 0.14),           /* Ambient water-refracted drop shadow */
+        0 4px 12px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Curved Lens Top Glare Sheen */
@@ -166,12 +170,12 @@ body::before {
     right: 6%;
     height: 48%;
     border-radius: 9999px 9999px 0 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.05) 80%, transparent 100%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.04) 75%, transparent 100%);
     pointer-events: none;
     z-index: 1;
 }
 
-/* Perimeter Refraction Gradient Rim */
+/* Perimeter Refraction Gradient Rim - Neutral Specular White */
 .bottom-nav::after {
     content: '';
     position: absolute;
@@ -180,9 +184,9 @@ body::before {
     padding: 1px;
     background: linear-gradient(
         135deg, 
-        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.90) 0%, 
         rgba(255, 255, 255, 0.25) 35%, 
-        rgba(186, 230, 253, 0.45) 70%, 
+        rgba(255, 255, 255, 0.15) 70%, 
         rgba(255, 255, 255, 0.75) 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -241,7 +245,7 @@ body::before {
     text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 0 12px rgba(2, 132, 199, 0.3) !important;
 }
 
-/* Liquid Water Droplet Sliding Pill */
+/* Liquid Water Droplet Sliding Pill — Neutral Clear Water Lens */
 .nav-pill {
     position: absolute;
     top: 50%;
@@ -249,14 +253,14 @@ body::before {
     height: 48px;
     margin-top: -24px;
     border-radius: 9999px;
-    background: linear-gradient(135deg, rgba(2, 132, 199, 0.18) 0%, rgba(255, 255, 255, 0.35) 100%);
-    border: 1px solid rgba(2, 132, 199, 0.35);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.10) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
     box-shadow: 
-        inset 0 1px 2px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -1px 2px 0 rgba(2, 132, 199, 0.18),
-        0 4px 14px rgba(2, 132, 199, 0.20);
-    backdrop-filter: blur(6px) saturate(220%) contrast(120%);
-    -webkit-backdrop-filter: blur(6px) saturate(220%) contrast(120%);
+        inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 2px 0 rgba(255, 255, 255, 0.25),
+        0 4px 12px rgba(0, 40, 100, 0.08);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 1;
     pointer-events: none;
     transition:
@@ -264,9 +268,6 @@ body::before {
         transform 0.38s cubic-bezier(0.25, 1, 0.5, 1),
         opacity 0.25s ease;
 }
-
-/* Keep page content from being obscured under the floating island */
-body { padding-bottom: calc(64px + 32px); }
 
 /* Focus / selection */
 a:focus, button:focus, input:focus, a:active, button:active { outline: none !important; box-shadow: none !important; }
@@ -307,13 +308,7 @@ input::selection { background: rgba(0,119,182,0.15) !important; }
     text-align: center;
     scroll-margin-top: var(--top-h);
     overflow: hidden;
-
-    /* Elegant full-screen mesh gradient — no harsh blue edge */
-    background:
-        radial-gradient(ellipse 90% 65% at 50% -10%, rgba(0,119,182,0.16) 0%, rgba(0,119,182,0.04) 55%, transparent 80%),
-        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(56,189,248,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 30% at 0% 80%, rgba(0,119,182,0.05) 0%, transparent 50%),
-        linear-gradient(160deg, #e8f4fe 0%, #f2f8ff 30%, #fafcff 65%, #ffffff 100%);
+    background: transparent;
 }
 
 /* Noise texture for premium depth */
@@ -617,7 +612,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
     /* Bottom nav liquid island sizing is managed by island component */
 
     html, body, .app-container { scroll-snap-type: none !important; scroll-behavior: auto !important; }
-    body { padding-bottom: var(--bot-h); }
+    body { padding-top: var(--top-h) !important; padding-bottom: calc(64px + 32px) !important; }
 
     .section, .hero {
         min-height: calc(100vh - var(--top-h));
@@ -627,6 +622,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center;
+        background: transparent !important;
     }
     .section > .container, .hero > .container {
         flex-grow: 1;
@@ -750,33 +746,24 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
 .desktop-nav a:hover, .desktop-nav a.active { color: var(--blue); }
 /* nav-pill inside desktop-nav inherits the .nav-pill rules already defined */
 
-/* On desktop: logo left, nav right */
+/* On desktop: top-header space-between, nav right */
 @media (min-width: 769px) {
+    .top-header {
+        justify-content: space-between;
+        padding: 0 40px;
+    }
     /* Logo aligns left on desktop */
     .logo-centered { margin: 0; }
     /* Bottom nav is completely hidden on desktop */
     .bottom-nav { display: none !important; }
-    body { padding-bottom: 0 !important; }
+    body { padding-top: var(--top-h) !important; padding-bottom: 0 !important; }
     /* Page height on desktop uses only top header */
     .hero { height: calc(100vh - var(--top-h)) !important; }
     .section { scroll-margin-top: var(--top-h) !important; }
 }
 
-/* On mobile: hide desktop nav, show bottom nav */
+/* On mobile: hide desktop nav, center logo in fixed liquid glass top bar */
 @media (max-width: 768px) {
     .desktop-nav { display: none !important; }
-}
-
-/* ============================================================
-   DESKTOP & MOBILE MEDIA CONTROLS FOR FLOATING ISLAND
-   ============================================================ */
-@media (min-width: 769px) {
-    /* Hide floating bottom island completely on desktop (uses top nav) */
-    .bottom-nav { display: none !important; }
-    body { padding-bottom: 0 !important; }
-}
-
-@media (max-width: 768px) {
-    /* Floating bottom island padding on mobile */
-    body { padding-bottom: calc(64px + 32px) !important; }
+    body { padding-top: var(--top-h) !important; padding-bottom: calc(64px + 32px) !important; }
 }
