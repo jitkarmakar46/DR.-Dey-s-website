@@ -632,16 +632,18 @@ export default function Home() {
                 </section>
             )}
 
-            <footer className="footer">
-                <div className="container">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <Activity size={24} color="var(--medical-blue)" />
-                        <h2 style={{ margin: 0 }}>Dilip Dey Clinic</h2>
+            {activeSection === 'home' && (
+                <footer className="footer">
+                    <div className="container">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <Activity size={24} color="var(--medical-blue)" />
+                            <h2 style={{ margin: 0 }}>Dilip Dey Clinic</h2>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)' }}>Advanced General Medicine & Diagnostics</p>
+                        <p style={{ color: 'var(--text-tertiary)', marginTop: '48px', fontSize: '0.85rem' }}>&copy; 2026 Dr. Dilip Dey Clinic. All rights reserved.</p>
                     </div>
-                    <p style={{ color: 'var(--text-secondary)' }}>Advanced General Medicine & Diagnostics</p>
-                    <p style={{ color: 'var(--text-tertiary)', marginTop: '48px', fontSize: '0.85rem' }}>&copy; 2026 Dr. Dilip Dey Clinic. All rights reserved.</p>
-                </div>
-            </footer>
+                </footer>
+            )}
         </div>
     );
 }
