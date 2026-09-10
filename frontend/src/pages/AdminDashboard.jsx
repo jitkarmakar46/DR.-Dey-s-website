@@ -91,10 +91,15 @@ export default function AdminDashboard() {
     // Security: strictly ask for password on every single reload or visit
     useEffect(() => {
         document.title = "Admin Portal | Dr. Dey Clinic";
+        document.body.classList.add('admin-view');
         try {
             localStorage.removeItem('adminToken');
             sessionStorage.removeItem('adminToken');
         } catch (e) {}
+
+        return () => {
+            document.body.classList.remove('admin-view');
+        };
     }, []);
 
     // Screen width listener

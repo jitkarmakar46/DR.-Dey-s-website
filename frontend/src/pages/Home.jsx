@@ -137,23 +137,33 @@ export default function Home() {
 
     // Update BOTH desktop + mobile pill positions whenever activeSection changes
     useEffect(() => {
-        const raf = requestAnimationFrame(() => {
+        const updatePill = () => {
             // Desktop pill (top-right nav)
             if (navLinksRef.current) {
                 const link = navLinksRef.current.querySelector(`[data-nav="${activeSection}"]`);
-                if (link) {
+                if (link && link.offsetWidth > 0) {
                     setPillStyle({ width: link.offsetWidth, x: link.offsetLeft, opacity: 1 });
                 }
             }
             // Mobile pill (bottom nav)
             if (mobileNavRef.current) {
                 const mLink = mobileNavRef.current.querySelector(`[data-nav="${activeSection}"]`);
-                if (mLink) {
+                if (mLink && mLink.offsetWidth > 0) {
                     setMobilePillStyle({ width: mLink.offsetWidth, x: mLink.offsetLeft, opacity: 1 });
                 }
             }
-        });
-        return () => cancelAnimationFrame(raf);
+        };
+
+        const raf = requestAnimationFrame(updatePill);
+        window.addEventListener('resize', updatePill);
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(updatePill);
+        }
+
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener('resize', updatePill);
+        };
     }, [activeSection]);
 
     // Scroll Spy — ignores observer changes during manual direct tab jumps
