@@ -114,8 +114,8 @@ export default function AdminDashboard() {
     
     // Unified Date filter state for Date-wise Appointments mode
     const [selectedDateFilter, setSelectedDateFilter] = useState(() => new Date().toISOString().split('T')[0]);
-    // Date filter target: 'booking_date' (Booked On / Submission Date - DEFAULT) or 'slot_date' (Scheduled Visit Date)
-    const [dateFilterField, setDateFilterField] = useState('booking_date');
+    // Date filter target: 'slot_date' (Scheduled Visit Date - DEFAULT) or 'booking_date' (Booking Submission Date)
+    const [dateFilterField, setDateFilterField] = useState('slot_date');
     const [sortBy, setSortBy] = useState('booked_asc'); // default: date-wise queue format
 
     const fetchAppointments = useCallback(async (isSilent = false) => {
@@ -424,6 +424,55 @@ export default function AdminDashboard() {
                     return idA - idB;
                 }
 
+                case 'name_asc': {
+                    const nameA = (a.patientName || '').toLowerCase();
+                    const nameB = (b.patientName || '').toLowerCase();
+                    const cmp = nameA.localeCompare(nameB);
+                    if (cmp !== 0) return cmp;
+                    return infoA.timestamp - infoB.timestamp || idA - idB;
+                }
+
+                case 'name_desc': {
+                    const nameA = (a.patientName || '').toLowerCase();
+                    const nameB = (b.patientName || '').toLowerCase();
+                    const cmp = nameB.localeCompare(nameA);
+                    if (cmp !== 0) return cmp;
+                    return infoA.timestamp - infoB.timestamp || idA - idB;
+                }
+
+                case 'time_slot_asc': {
+                    // Morning -> Afternoon -> Evening
+                    const rank = { 'Morning': 1, 'Afternoon': 2, 'Evening': 3 };
+                    const rankA = rank[a.time] || 99;
+                    const rankB = rank[b.time] || 99;
+                    if (rankA !== rankB) return rankA - rankB;
+                    return infoA.timestamp - infoB.timestamp || idA - idB;
+                }
+
+                case 'time_slot_desc': {
+                    // Evening -> Afternoon -> Morning
+                    const rank = { 'Evening': 1, 'Afternoon': 2, 'Morning': 3 };
+                    const rankA = rank[a.time] || 99;
+                    const rankB = rank[b.time] || 99;
+                    if (rankA !== rankB) return rankA - rankB;
+                    return infoA.timestamp - infoB.timestamp || idA - idB;
+                }
+
+                case 'status_flow': {
+                    // Pending -> Confirmed -> Completed -> Cancelled
+                    const rank = { 'Pending': 1, 'Confirmed': 2, 'Completed': 3, 'Cancelled': 4 };
+                    const rankA = rank[a.status] || 99;
+                    const rankB = rank[b.status] || 99;
+                    if (rankA !== rankB) return rankA - rankB;
+                    return infoA.timestamp - infoB.timestamp || idA - idB;
+                }
+
+                case 'track_asc': {
+                    const trA = (a.trackingId || '').toLowerCase();
+                    const trB = (b.trackingId || '').toLowerCase();
+                    return trA.localeCompare(trB) || idA - idB;
+                }
+
                 case 'appt_date_asc': {
                     // Slot Visit Date: Earliest slot date first
                     const apptDiff = new Date(a.date || 0) - new Date(b.date || 0);
@@ -439,6 +488,10 @@ export default function AdminDashboard() {
                 }
 
                 default: {
+                    if (appointmentViewMode === 'date_wise') {
+                        if (infoA.timestamp !== infoB.timestamp) return infoA.timestamp - infoB.timestamp;
+                        return idA - idB;
+                    }
                     const dateCompare = infoB.dateStr.localeCompare(infoA.dateStr);
                     if (dateCompare !== 0) return dateCompare;
                     return infoA.timestamp - infoB.timestamp || idA - idB;
@@ -868,23 +921,6 @@ export default function AdminDashboard() {
                                                 <div style={{ display: 'flex', gap: '6px', background: '#ede9fe', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setDateFilterField('booking_date')}
-                                                        style={{
-                                                            border: 'none',
-                                                            background: dateFilterField === 'booking_date' ? '#7c3aed' : 'transparent',
-                                                            color: dateFilterField === 'booking_date' ? '#ffffff' : '#5b21b6',
-                                                            padding: '6px 14px',
-                                                            borderRadius: '8px',
-                                                            fontSize: '0.82rem',
-                                                            fontWeight: dateFilterField === 'booking_date' ? 800 : 600,
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.15s'
-                                                        }}
-                                                    >
-                                                        📅 Booked On (When Patient Booked) — Default
-                                                    </button>
-                                                    <button
-                                                        type="button"
                                                         onClick={() => setDateFilterField('slot_date')}
                                                         style={{
                                                             border: 'none',
@@ -898,7 +934,24 @@ export default function AdminDashboard() {
                                                             transition: 'all 0.15s'
                                                         }}
                                                     >
-                                                        🏥 Scheduled For (Clinic Visit Slot)
+                                                        🏥 Scheduled Clinic Visit Date (Default)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDateFilterField('booking_date')}
+                                                        style={{
+                                                            border: 'none',
+                                                            background: dateFilterField === 'booking_date' ? '#7c3aed' : 'transparent',
+                                                            color: dateFilterField === 'booking_date' ? '#ffffff' : '#5b21b6',
+                                                            padding: '6px 14px',
+                                                            borderRadius: '8px',
+                                                            fontSize: '0.82rem',
+                                                            fontWeight: dateFilterField === 'booking_date' ? 800 : 600,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s'
+                                                        }}
+                                                    >
+                                                        📅 Booking Submission Date (When Patient Booked)
                                                     </button>
                                                     <button
                                                         type="button"
@@ -1061,12 +1114,18 @@ export default function AdminDashboard() {
                                                     onChange={(e) => setSortBy(e.target.value)}
                                                     style={{ borderRadius: '10px', fontSize: '0.9rem', flex: 1, fontWeight: 700, color: '#1e1b4b', border: '2px solid #818cf8', background: '#fff', cursor: 'pointer', padding: '8px 12px' }}
                                                 >
-                                                    <option value="booked_asc">📅 Date-wise Queue: Newest Booking Date First → Earliest to Latest Booking (Default)</option>
-                                                    <option value="booked_asc_oldest_day">📅 Date-wise Queue: Oldest Booking Date First → Earliest to Latest Booking</option>
-                                                    <option value="booked_desc">🔽 Latest Booked Overall First (Who booked just now appears at very top)</option>
-                                                    <option value="pure_oldest_first">🔼 Oldest Booked Overall First (Earliest booking ever at top)</option>
-                                                    <option value="appt_date_asc">📅 Appointment Visit Date: Earliest Date First</option>
-                                                    <option value="appt_date_desc">📅 Appointment Visit Date: Latest Date First</option>
+                                                    <option value="booked_asc">⭐ Default Order: Earliest Booked at Top → Latest at Bottom</option>
+                                                    <option value="booked_desc">🔽 Reverse Booking Order: Latest Booked at Top → Earliest at Bottom</option>
+                                                    <option value="name_asc">👤 Patient Name: A to Z (Alphabetical)</option>
+                                                    <option value="name_desc">👤 Patient Name: Z to A</option>
+                                                    <option value="time_slot_asc">🕒 Clinic Slot: Morning → Afternoon → Evening</option>
+                                                    <option value="time_slot_desc">🕒 Clinic Slot: Evening → Afternoon → Morning</option>
+                                                    <option value="status_flow">📋 Status: Pending First → Confirmed → Completed</option>
+                                                    <option value="track_asc">🔢 Tracking ID: Ascending (A to Z)</option>
+                                                    <option value="booked_asc_oldest_day">📅 Oldest Booking Date Group First → Earliest to Latest</option>
+                                                    <option value="pure_oldest_first">🔼 Pure First Booking Ever at Very Top</option>
+                                                    <option value="appt_date_asc">🏥 Scheduled Visit Date: Earliest Date First</option>
+                                                    <option value="appt_date_desc">🏥 Scheduled Visit Date: Latest Date First</option>
                                                 </select>
                                             </div>
                                         </>
@@ -1159,10 +1218,10 @@ export default function AdminDashboard() {
                                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
                                         <thead>
                                             <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
-                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Booking Time</th>
+                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Booking Submitted</th>
                                                 <th style={{ padding: '16px 24px', fontWeight: 700 }}>Patient Info</th>
                                                 <th style={{ padding: '16px 24px', fontWeight: 700 }}>Department</th>
-                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Appt Date & Slot</th>
+                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Scheduled Visit Slot</th>
                                                 <th style={{ padding: '16px 24px', fontWeight: 700 }}>Tracking ID</th>
                                                 <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
                                                 <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
