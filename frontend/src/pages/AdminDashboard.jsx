@@ -135,15 +135,15 @@ export default function AdminDashboard() {
     
     // UI & Filter States
     const [activeTab, setActiveTab] = useState('overview');
-    // appointmentViewMode: 'all' (All Appointments: auto-sorted date-wise, no date picker needed) vs 'date_wise' (Date-wise Appointments)
+    // appointmentViewMode: 'all' (All Appointments) vs 'date_wise' (Filtered by Date)
     const [appointmentViewMode, setAppointmentViewMode] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     
-    // Unified Date filter state for Date-wise Appointments mode
+    // Unified Date filter state
     const [selectedDateFilter, setSelectedDateFilter] = useState(() => new Date().toISOString().split('T')[0]);
-    // Date filter target: 'slot_date' (Scheduled Visit Date - DEFAULT) or 'booking_date' (Booking Submission Date)
-    const [dateFilterField, setDateFilterField] = useState('slot_date');
+    // dateFilterField: 'visitDate' (Scheduled Clinic Visit Date - DEFAULT) or 'bookingDate' (Booking Submission Date)
+    const [dateFilterField, setDateFilterField] = useState('visitDate');
     const [sortBy, setSortBy] = useState('booked_asc'); // default: date-wise queue format
 
     const handleLogout = useCallback(() => {
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
         return Array.from(map.values());
     }, [appointments]);
 
-    // --- Redesigned Filter & Sort Logic ---
+    // --- Unified Filter & Sort Logic ---
     const filteredAppointments = useMemo(() => {
         const savedTimestamps = JSON.parse(localStorage.getItem('clinic_booking_timestamps') || '{}');
 
@@ -437,17 +437,18 @@ export default function AdminDashboard() {
 
             const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
 
-            // In 'all' mode, all dates across all days are included automatically
-            // In 'date_wise' mode, strictly filter ONLY records matching the selected date!
+            // Date filtering:
+            // In 'all' mode: all dates are shown
+            // In 'date_wise' mode: strictly filter records matching selectedDateFilter by visitDate or bookingDate!
             let matchesDate = true;
             if (appointmentViewMode === 'date_wise') {
                 const targetNorm = normalizeDateStr(selectedDateFilter);
                 if (targetNorm && targetNorm !== 'All') {
                     const appDateNorm = normalizeDateStr(app.date);
                     const bookingDateNorm = info.dateStr;
-                    if (dateFilterField === 'slot_date') {
+                    if (dateFilterField === 'visitDate' || dateFilterField === 'slot_date') {
                         matchesDate = (appDateNorm === targetNorm);
-                    } else if (dateFilterField === 'booking_date') {
+                    } else if (dateFilterField === 'bookingDate' || dateFilterField === 'booking_date') {
                         matchesDate = (bookingDateNorm === targetNorm);
                     } else {
                         matchesDate = (appDateNorm === targetNorm || bookingDateNorm === targetNorm);
@@ -1006,7 +1007,9 @@ export default function AdminDashboard() {
                                             <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: isMobile ? '0.8rem' : '0.88rem' }}>
                                                 {appointmentViewMode === 'all'
                                                     ? `Showing all ${filteredAppointments.length} appointments across all dates`
-                                                    : `Showing ${filteredAppointments.length} matching appointment${filteredAppointments.length !== 1 ? 's' : ''} for selected date`}
+                                                    : dateFilterField === 'visitDate'
+                                                    ? `Showing ${filteredAppointments.length} appointment${filteredAppointments.length !== 1 ? 's' : ''} scheduled for visitDate: ${selectedDateFilter}`
+                                                    : `Showing ${filteredAppointments.length} appointment${filteredAppointments.length !== 1 ? 's' : ''} booked on bookingDate: ${selectedDateFilter}`}
                                             </p>
                                         </div>
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
@@ -1055,7 +1058,7 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* ── Segmented Control: All Appointments vs Date-wise Appointments ── */}
+                                    {/* ── Direct Top-Level Switcher: All Appointments vs Visit Date (visitDate) vs Booking Date (bookingDate) ── */}
                                     <div style={{ 
                                         display: 'flex', 
                                         flexDirection: isMobile ? 'column' : 'row',
@@ -1065,6 +1068,7 @@ export default function AdminDashboard() {
                                         borderRadius: '14px', 
                                         width: isMobile ? '100%' : 'fit-content' 
                                     }}>
+                                        {/* Button 1: All Appointments */}
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -1072,7 +1076,7 @@ export default function AdminDashboard() {
                                                 setSortBy('booked_asc');
                                             }}
                                             style={{
-                                                padding: isMobile ? '9px 12px' : '10px 22px',
+                                                padding: isMobile ? '9px 12px' : '10px 20px',
                                                 borderRadius: '10px',
                                                 border: 'none',
                                                 cursor: 'pointer',
@@ -1091,40 +1095,75 @@ export default function AdminDashboard() {
                                         >
                                             <Calendar size={15} /> All Appointments
                                         </button>
+
+                                        {/* Button 2: Visit Date (visitDate) */}
                                         <button
                                             type="button"
-                                            onClick={() => setAppointmentViewMode('date_wise')}
+                                            onClick={() => {
+                                                setAppointmentViewMode('date_wise');
+                                                setDateFilterField('visitDate');
+                                                setSortBy('booked_asc');
+                                            }}
                                             style={{
-                                                padding: isMobile ? '9px 12px' : '10px 22px',
+                                                padding: isMobile ? '9px 12px' : '10px 20px',
                                                 borderRadius: '10px',
                                                 border: 'none',
                                                 cursor: 'pointer',
-                                                fontWeight: appointmentViewMode === 'date_wise' ? 800 : 600,
+                                                fontWeight: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? 800 : 600,
                                                 fontSize: isMobile ? '0.82rem' : '0.88rem',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 gap: '6px',
-                                                background: appointmentViewMode === 'date_wise' ? '#0284c7' : 'transparent',
-                                                color: appointmentViewMode === 'date_wise' ? '#ffffff' : '#475569',
-                                                boxShadow: appointmentViewMode === 'date_wise' ? '0 2px 8px rgba(2, 132, 199, 0.3)' : 'none',
+                                                background: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '#7c3aed' : 'transparent',
+                                                color: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '#ffffff' : '#475569',
+                                                boxShadow: (appointmentViewMode === 'date_wise' && dateFilterField === 'visitDate') ? '0 2px 8px rgba(124, 58, 237, 0.3)' : 'none',
                                                 transition: 'all 0.2s',
                                                 width: isMobile ? '100%' : 'auto'
                                             }}
                                         >
-                                            <Filter size={15} /> Date-wise View (Select Date)
+                                            <Filter size={15} /> 🏥 Visit Date (visitDate)
+                                        </button>
+
+                                        {/* Button 3: Booking Date (bookingDate) */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAppointmentViewMode('date_wise');
+                                                setDateFilterField('bookingDate');
+                                                setSortBy('booked_asc');
+                                            }}
+                                            style={{
+                                                padding: isMobile ? '9px 12px' : '10px 20px',
+                                                borderRadius: '10px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontWeight: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? 800 : 600,
+                                                fontSize: isMobile ? '0.82rem' : '0.88rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px',
+                                                background: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '#7c3aed' : 'transparent',
+                                                color: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '#ffffff' : '#475569',
+                                                boxShadow: (appointmentViewMode === 'date_wise' && dateFilterField === 'bookingDate') ? '0 2px 8px rgba(124, 58, 237, 0.3)' : 'none',
+                                                transition: 'all 0.2s',
+                                                width: isMobile ? '100%' : 'auto'
+                                            }}
+                                        >
+                                            <Clock size={15} /> 📅 Booking Date (bookingDate)
                                         </button>
                                     </div>
 
-                                    {/* ── View Mode Info Note ── */}
+                                    {/* ── View Mode Detail Box ── */}
                                     {appointmentViewMode === 'all' ? (
                                         <div style={{ background: '#e0f2fe', border: '1.5px solid #bae6fd', borderRadius: '12px', padding: isMobile ? '10px 14px' : '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0369a1', fontSize: isMobile ? '0.8rem' : '0.88rem', fontWeight: 600 }}>
                                                 <span style={{ fontSize: '1.1rem' }}>✨</span>
-                                                <span><strong>Automatic Date Queue:</strong> Grouped date-wise. Within each day, who booked first is at top.</span>
+                                                <span><strong>Automatic Date Queue:</strong> All appointments across all days grouped by date. Within each day, earliest booked is at the top.</span>
                                             </div>
                                             <span style={{ fontSize: '0.75rem', background: '#0284c7', color: '#fff', padding: '4px 10px', borderRadius: '50px', fontWeight: 800 }}>
-                                                {filteredAppointments.length} Sorted
+                                                {filteredAppointments.length} All Sorted
                                             </span>
                                         </div>
                                     ) : (
@@ -1133,7 +1172,9 @@ export default function AdminDashboard() {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6d28d9', fontSize: isMobile ? '0.82rem' : '0.92rem', fontWeight: 700 }}>
                                                     <span style={{ fontSize: '1.1rem' }}>🎯</span>
-                                                    <span><strong>Date Filter:</strong> Only records for your chosen date are displayed.</span>
+                                                    <span>
+                                                        <strong>Filtering by {dateFilterField === 'visitDate' ? 'Scheduled Visit Date (visitDate)' : 'Booking Submission Date (bookingDate)'}:</strong> Records matching chosen date are shown.
+                                                    </span>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                                     <span style={{ fontSize: '0.78rem', fontWeight: 800, background: '#7c3aed', color: '#fff', padding: '4px 10px', borderRadius: '50px' }}>
@@ -1159,75 +1200,62 @@ export default function AdminDashboard() {
                                                             cursor: 'pointer'
                                                         }}
                                                     >
-                                                        Reset ✕
+                                                        View All / Reset ✕
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            {/* Filter Field Mode Segmented Selector */}
-                                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: '6px' }}>
-                                                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#4c1d95' }}>Filter Mode:</span>
-                                                <div style={{ display: 'flex', gap: '4px', background: '#ede9fe', padding: '3px', borderRadius: '10px', flexWrap: 'wrap' }}>
+                                            {/* Quick Filter Switcher buttons */}
+                                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#4c1d95', whiteSpace: 'nowrap' }}>Active Target:</span>
+                                                <div style={{ display: 'flex', gap: '6px', background: '#ede9fe', padding: '3px', borderRadius: '10px', flexWrap: 'wrap' }}>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setDateFilterField('slot_date')}
+                                                        onClick={() => setDateFilterField('visitDate')}
                                                         style={{
                                                             border: 'none',
-                                                            background: dateFilterField === 'slot_date' ? '#7c3aed' : 'transparent',
-                                                            color: dateFilterField === 'slot_date' ? '#ffffff' : '#5b21b6',
-                                                            padding: '5px 10px',
-                                                            borderRadius: '7px',
-                                                            fontSize: isMobile ? '0.74rem' : '0.82rem',
-                                                            fontWeight: dateFilterField === 'slot_date' ? 800 : 600,
+                                                            background: dateFilterField === 'visitDate' ? '#7c3aed' : 'transparent',
+                                                            color: dateFilterField === 'visitDate' ? '#ffffff' : '#5b21b6',
+                                                            padding: '6px 14px',
+                                                            borderRadius: '8px',
+                                                            fontSize: isMobile ? '0.76rem' : '0.84rem',
+                                                            fontWeight: dateFilterField === 'visitDate' ? 800 : 600,
                                                             cursor: 'pointer',
                                                             flex: isMobile ? 1 : 'initial',
+                                                            boxShadow: dateFilterField === 'visitDate' ? '0 2px 6px rgba(124, 58, 237, 0.25)' : 'none',
                                                             transition: 'all 0.15s'
                                                         }}
                                                     >
-                                                        🏥 Visit Date
+                                                        🏥 Visit Date (visitDate)
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setDateFilterField('booking_date')}
+                                                        onClick={() => setDateFilterField('bookingDate')}
                                                         style={{
                                                             border: 'none',
-                                                            background: dateFilterField === 'booking_date' ? '#7c3aed' : 'transparent',
-                                                            color: dateFilterField === 'booking_date' ? '#ffffff' : '#5b21b6',
-                                                            padding: '5px 10px',
-                                                            borderRadius: '7px',
-                                                            fontSize: isMobile ? '0.74rem' : '0.82rem',
-                                                            fontWeight: dateFilterField === 'booking_date' ? 800 : 600,
+                                                            background: dateFilterField === 'bookingDate' ? '#7c3aed' : 'transparent',
+                                                            color: dateFilterField === 'bookingDate' ? '#ffffff' : '#5b21b6',
+                                                            padding: '6px 14px',
+                                                            borderRadius: '8px',
+                                                            fontSize: isMobile ? '0.76rem' : '0.84rem',
+                                                            fontWeight: dateFilterField === 'bookingDate' ? 800 : 600,
                                                             cursor: 'pointer',
                                                             flex: isMobile ? 1 : 'initial',
+                                                            boxShadow: dateFilterField === 'bookingDate' ? '0 2px 6px rgba(124, 58, 237, 0.25)' : 'none',
                                                             transition: 'all 0.15s'
                                                         }}
                                                     >
-                                                        📅 Booking Date
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setDateFilterField('both')}
-                                                        style={{
-                                                            border: 'none',
-                                                            background: dateFilterField === 'both' ? '#7c3aed' : 'transparent',
-                                                            color: dateFilterField === 'both' ? '#ffffff' : '#5b21b6',
-                                                            padding: '5px 10px',
-                                                            borderRadius: '7px',
-                                                            fontSize: isMobile ? '0.74rem' : '0.82rem',
-                                                            fontWeight: dateFilterField === 'both' ? 800 : 600,
-                                                            cursor: 'pointer',
-                                                            flex: isMobile ? 1 : 'initial',
-                                                            transition: 'all 0.15s'
-                                                        }}
-                                                    >
-                                                        🔄 Either
+                                                        📅 Booking Date (bookingDate)
                                                     </button>
                                                 </div>
                                             </div>
 
                                             {/* Date Picker Bar & Quick Buttons */}
                                             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: '10px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 240px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 280px' }}>
+                                                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#4c1d95', whiteSpace: 'nowrap' }}>
+                                                        {dateFilterField === 'visitDate' ? '🏥 Select Visit Date (visitDate):' : '📅 Select Booking Date (bookingDate):'}
+                                                    </label>
                                                     <input 
                                                         type="date"
                                                         className="form-control"
@@ -1235,7 +1263,7 @@ export default function AdminDashboard() {
                                                         onChange={(e) => setSelectedDateFilter(e.target.value)}
                                                         style={{
                                                             borderRadius: '10px',
-                                                            fontSize: '0.88rem',
+                                                            fontSize: '0.9rem',
                                                             fontWeight: 700,
                                                             border: '2px solid #7c3aed',
                                                             background: '#ffffff',
@@ -1255,7 +1283,7 @@ export default function AdminDashboard() {
                                                             color: selectedDateFilter === new Date().toISOString().split('T')[0] ? '#ffffff' : '#6d28d9',
                                                             border: 'none',
                                                             borderRadius: '8px',
-                                                            padding: '6px 12px',
+                                                            padding: '7px 14px',
                                                             fontSize: '0.78rem',
                                                             fontWeight: 700,
                                                             cursor: 'pointer',
@@ -1263,27 +1291,6 @@ export default function AdminDashboard() {
                                                         }}
                                                     >
                                                         Today
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const yest = new Date();
-                                                            yest.setDate(yest.getDate() - 1);
-                                                            setSelectedDateFilter(yest.toISOString().split('T')[0]);
-                                                        }}
-                                                        style={{
-                                                            background: '#ede9fe',
-                                                            color: '#6d28d9',
-                                                            border: 'none',
-                                                            borderRadius: '8px',
-                                                            padding: '6px 12px',
-                                                            fontSize: '0.78rem',
-                                                            fontWeight: 700,
-                                                            cursor: 'pointer',
-                                                            flex: 1
-                                                        }}
-                                                    >
-                                                        Yesterday
                                                     </button>
                                                     <button
                                                         type="button"
@@ -1297,7 +1304,7 @@ export default function AdminDashboard() {
                                                             color: '#6d28d9',
                                                             border: 'none',
                                                             borderRadius: '8px',
-                                                            padding: '6px 12px',
+                                                            padding: '7px 14px',
                                                             fontSize: '0.78rem',
                                                             fontWeight: 700,
                                                             cursor: 'pointer',
@@ -1306,23 +1313,44 @@ export default function AdminDashboard() {
                                                     >
                                                         Tomorrow
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const yest = new Date();
+                                                            yest.setDate(yest.getDate() - 1);
+                                                            setSelectedDateFilter(yest.toISOString().split('T')[0]);
+                                                        }}
+                                                        style={{
+                                                            background: '#ede9fe',
+                                                            color: '#6d28d9',
+                                                            border: 'none',
+                                                            borderRadius: '8px',
+                                                            padding: '7px 14px',
+                                                            fontSize: '0.78rem',
+                                                            fontWeight: 700,
+                                                            cursor: 'pointer',
+                                                            flex: 1
+                                                        }}
+                                                    >
+                                                        Yesterday
+                                                    </button>
                                                 </div>
                                             </div>
 
                                             {/* Live Filter Summary */}
                                             {selectedDateFilter && (
-                                                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: filteredAppointments.length === 0 ? '#b91c1c' : '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: filteredAppointments.length === 0 ? '#b91c1c' : '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     {filteredAppointments.length === 0 ? (
-                                                        <span>⚠ No appointments found for {new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.</span>
+                                                        <span>⚠ No records found for {dateFilterField === 'visitDate' ? 'visitDate' : 'bookingDate'} on {new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.</span>
                                                     ) : (
-                                                        <span>✓ Strictly showing {filteredAppointments.length} record(s) for {new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.</span>
+                                                        <span>✓ Strictly showing {filteredAppointments.length} record(s) matching {dateFilterField === 'visitDate' ? 'visitDate' : 'bookingDate'} on {new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.</span>
                                                     )}
                                                 </div>
                                             )}
                                         </div>
                                     )}
 
-                                    {/* In date_wise mode, if 0 records match, suppress search/sort inputs to prevent clutter */}
+                                    {/* Search & Sort inputs */}
                                     {!(appointmentViewMode === 'date_wise' && filteredAppointments.length === 0) && (
                                         <>
                                             {/* ── Row 1: Search + Status Filter (Stacked on Mobile, 2-Col on Desktop) ── */}
@@ -1442,15 +1470,13 @@ export default function AdminDashboard() {
                                         </h3>
                                         <p style={{ margin: '0 0 8px', color: '#b91c1c', fontSize: isMobile ? '0.88rem' : '0.98rem', fontWeight: 700 }}>
                                             {selectedDateFilter
-                                                ? `Zero bookings found for ${new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                                                ? `Zero bookings found for ${dateFilterField === 'visitDate' ? 'visitDate' : 'bookingDate'} on ${new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`
                                                 : 'No date selected'}
                                         </p>
                                         <p style={{ margin: '0 auto 24px', color: '#64748b', fontSize: isMobile ? '0.82rem' : '0.9rem', maxWidth: '440px', lineHeight: 1.5 }}>
-                                            {dateFilterField === 'booking_date'
-                                                ? 'No patient booked an appointment on this date. All records for other dates are strictly hidden.'
-                                                : dateFilterField === 'slot_date'
-                                                ? 'No patient is scheduled to visit the clinic on this date. All records for other dates are strictly hidden.'
-                                                : 'No appointments match this date under either booking or scheduled visit dates.'}
+                                            {dateFilterField === 'bookingDate'
+                                                ? 'No patient submitted a booking on this date. All records for other dates are strictly hidden.'
+                                                : 'No patient is scheduled to visit the clinic on this date. All records for other dates are strictly hidden.'}
                                         </p>
                                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                                             <button
@@ -1487,7 +1513,7 @@ export default function AdminDashboard() {
                                                     cursor: 'pointer'
                                                 }}
                                             >
-                                                Today's Records
+                                                Check Today's Records
                                             </button>
                                         </div>
                                     </div>
@@ -1552,17 +1578,27 @@ export default function AdminDashboard() {
                                                                     gap: '6px'
                                                                 }}>
                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                        <span>{appointmentViewMode === 'date_wise' ? '🎯' : '📅'}</span>
+                                                                        <span>{appointmentViewMode === 'date_wise' ? (dateFilterField === 'visitDate' ? '🏥' : '📅') : '📅'}</span>
                                                                         <span style={{ fontWeight: 800, fontSize: '0.88rem', color: appointmentViewMode === 'date_wise' ? '#4c1d95' : '#0f172a' }}>
                                                                             {appointmentViewMode === 'date_wise'
-                                                                                ? (selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : info.formattedDate)
+                                                                                ? (dateFilterField === 'visitDate'
+                                                                                    ? `Visit Date (visitDate): ${selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : app.date}`
+                                                                                    : `Booking Date (bookingDate): ${selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : info.formattedDate}`)
                                                                                 : info.formattedDate}
                                                                         </span>
-                                                                        {isToday && (
-                                                                            <span style={{ background: '#0284c7', color: '#ffffff', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '50px' }}>TODAY</span>
-                                                                        )}
-                                                                        {isYesterday && (
-                                                                            <span style={{ background: '#64748b', color: '#ffffff', fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px' }}>YESTERDAY</span>
+                                                                        {appointmentViewMode === 'date_wise' ? (
+                                                                            <span style={{ background: '#7c3aed', color: '#ffffff', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '50px' }}>
+                                                                                {dateFilterField === 'visitDate' ? 'VISIT DATE' : 'BOOKING DATE'}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <>
+                                                                                {isToday && (
+                                                                                    <span style={{ background: '#0284c7', color: '#ffffff', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '50px' }}>TODAY</span>
+                                                                                )}
+                                                                                {isYesterday && (
+                                                                                    <span style={{ background: '#64748b', color: '#ffffff', fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px' }}>YESTERDAY</span>
+                                                                                )}
+                                                                            </>
                                                                         )}
                                                                     </div>
                                                                     <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
@@ -1591,7 +1627,7 @@ export default function AdminDashboard() {
                                                                     </span>
                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                         <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 500 }}>
-                                                                            🕒 {info.formattedTime}
+                                                                            🕒 Booked: {info.formattedDate} • {info.formattedTime}
                                                                         </span>
                                                                         <button 
                                                                             onClick={() => deleteAppointment(app.id)} 
@@ -1603,6 +1639,31 @@ export default function AdminDashboard() {
                                                                     </div>
                                                                 </div>
 
+                                                                {/* Scheduled Visit Slot Highlight (visitDate) */}
+                                                                <div style={{ 
+                                                                    background: dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? '#f5f3ff' : '#f8fafc', 
+                                                                    borderRadius: '10px', 
+                                                                    padding: '10px 12px', 
+                                                                    border: dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? '1.5px solid #ddd6fe' : '1px solid #f1f5f9', 
+                                                                    display: 'flex', 
+                                                                    flexDirection: 'column', 
+                                                                    gap: '4px', 
+                                                                    fontSize: '0.84rem' 
+                                                                }}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <span style={{ color: dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? '#6d28d9' : '#64748b', fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                                                            🏥 Scheduled Visit Date (visitDate):
+                                                                        </span>
+                                                                        <strong style={{ color: dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? '#5b21b6' : '#0f172a', fontSize: '0.9rem' }}>
+                                                                            📅 {app.date} • {app.time} Slot
+                                                                        </strong>
+                                                                    </div>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <span style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: 600, textTransform: 'uppercase' }}>Department:</span>
+                                                                        <span style={{ color: '#334155', fontWeight: 600 }}>{app.department}</span>
+                                                                    </div>
+                                                                </div>
+
                                                                 {/* Patient Name & Call Link */}
                                                                 <div>
                                                                     <div style={{ fontWeight: 800, fontSize: '1.02rem', color: '#0f172a' }}>{app.patientName}</div>
@@ -1611,18 +1672,6 @@ export default function AdminDashboard() {
                                                                             <Phone size={13} /> {app.phone}
                                                                             <span style={{ fontSize: '0.68rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '50px', fontWeight: 600 }}>Tap to call</span>
                                                                         </a>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Scheduled Slot & Department Box */}
-                                                                <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 12px', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.84rem' }}>
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                        <span style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: 600, textTransform: 'uppercase' }}>Scheduled Visit:</span>
-                                                                        <strong style={{ color: '#0f172a' }}>📅 {app.date} • {app.time}</strong>
-                                                                    </div>
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                        <span style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: 600, textTransform: 'uppercase' }}>Department:</span>
-                                                                        <span style={{ color: '#334155', fontWeight: 600 }}>{app.department}</span>
                                                                     </div>
                                                                 </div>
 
@@ -1665,7 +1714,7 @@ export default function AdminDashboard() {
                                                                         <button 
                                                                             onClick={() => updateStatus(app.id, 'Completed')} 
                                                                             className="btn" 
-                                                                            style={{ background: '#0284c7', color: 'white', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, borderRadius: '10px', width: '100%', textAlign: 'center' }}
+                                                                            style={{ background: '#0284c7', color: 'white', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', width: '100%', textAlign: 'center' }}
                                                                         >
                                                                             ✓ Mark Completed
                                                                         </button>
@@ -1693,13 +1742,29 @@ export default function AdminDashboard() {
                                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
                                                 <thead>
                                                     <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Booking Submitted</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Patient Info</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Department</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Scheduled Visit Slot</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Tracking ID</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
-                                                        <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                                                        {dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? (
+                                                            <>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700, color: '#7c3aed' }}>🏥 Visit Date (visitDate)</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Patient Info</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Department</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>📅 Booking Submitted</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Tracking ID</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700, color: dateFilterField === 'bookingDate' ? '#7c3aed' : '#475569' }}>
+                                                                    📅 Booking Submitted {dateFilterField === 'bookingDate' && appointmentViewMode === 'date_wise' ? '(bookingDate)' : ''}
+                                                                </th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Patient Info</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Department</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>🏥 Scheduled Visit Slot</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Tracking ID</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
+                                                                <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                                                            </>
+                                                        )}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1711,7 +1776,7 @@ export default function AdminDashboard() {
                                                                     <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>No Results Found</div>
                                                                     <div style={{ fontSize: '0.9rem', color: '#64748b', maxWidth: '420px', lineHeight: 1.6 }}>
                                                                         {appointmentViewMode === 'date_wise' && selectedDateFilter ? (
-                                                                            `No appointments match the selected date (${new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}). All other dates are hidden.`
+                                                                            `No appointments match ${dateFilterField === 'visitDate' ? 'visitDate' : 'bookingDate'} on (${new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}). All other dates are hidden.`
                                                                         ) : (
                                                                             'No appointment records match your current search or filter.'
                                                                         )}
@@ -1760,15 +1825,17 @@ export default function AdminDashboard() {
                                                                             <td colSpan="7" style={{ padding: '14px 24px', background: appointmentViewMode === 'date_wise' ? '#f5f3ff' : '#f8fafc' }}>
                                                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                                        <span style={{ fontSize: '1.1rem' }}>{appointmentViewMode === 'date_wise' ? '🎯' : '📅'}</span>
+                                                                                        <span style={{ fontSize: '1.1rem' }}>{appointmentViewMode === 'date_wise' ? (dateFilterField === 'visitDate' ? '🏥' : '📅') : '📅'}</span>
                                                                                         <span style={{ fontWeight: 800, fontSize: '0.96rem', color: appointmentViewMode === 'date_wise' ? '#4c1d95' : '#0f172a' }}>
                                                                                             {appointmentViewMode === 'date_wise'
-                                                                                                ? `Filtered Date Records: ${selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : info.formattedDate}`
+                                                                                                ? (dateFilterField === 'visitDate'
+                                                                                                    ? `Filtered Visit Date (visitDate): ${selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : app.date}`
+                                                                                                    : `Filtered Booking Date (bookingDate): ${selectedDateFilter ? new Date(selectedDateFilter + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : info.formattedDate}`)
                                                                                                 : `Records for ${info.formattedDate}`}
                                                                                         </span>
                                                                                         {appointmentViewMode === 'date_wise' ? (
                                                                                             <span style={{ background: '#7c3aed', color: '#ffffff', fontSize: '0.72rem', fontWeight: 800, padding: '3px 10px', borderRadius: '50px', letterSpacing: '0.04em' }}>
-                                                                                                {dateFilterField === 'booking_date' ? 'BOOKED ON THIS DAY' : dateFilterField === 'slot_date' ? 'SCHEDULED VISIT DATE' : 'EITHER DATE'}
+                                                                                                {dateFilterField === 'visitDate' ? 'VISIT DATE (visitDate)' : 'BOOKING DATE (bookingDate)'}
                                                                                             </span>
                                                                                         ) : (
                                                                                             <>
@@ -1794,75 +1861,151 @@ export default function AdminDashboard() {
                                                                     )}
                                                                     <tr style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }} onMouseOver={e => e.currentTarget.style.background='#f8fafc'} onMouseOut={e => e.currentTarget.style.background='transparent'}>
                                                                         
-                                                                        {/* COLUMN 1: BOOKING CREATED TIME */}
-                                                                        <td style={{ padding: '18px 24px', whiteSpace: 'nowrap' }}>
-                                                                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem' }}>
-                                                                                📅 {info.formattedDate}
-                                                                            </div>
-                                                                            <div style={{ color: '#0284c7', fontSize: '0.84rem', fontWeight: 600, marginTop: '2px' }}>
-                                                                                🕒 {info.formattedTime}
-                                                                            </div>
-                                                                        </td>
+                                                                        {dateFilterField === 'visitDate' && appointmentViewMode === 'date_wise' ? (
+                                                                            <>
+                                                                                {/* COLUMN 1: SCHEDULED VISIT DATE (visitDate) */}
+                                                                                <td style={{ padding: '18px 24px', whiteSpace: 'nowrap' }}>
+                                                                                    <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
+                                                                                        🏥 {app.date}
+                                                                                    </div>
+                                                                                    <div style={{ color: '#7c3aed', fontSize: '0.84rem', fontWeight: 700, marginTop: '2px' }}>
+                                                                                        🕒 {app.time} Slot
+                                                                                    </div>
+                                                                                </td>
 
-                                                                        {/* COLUMN 2: PATIENT INFO */}
-                                                                        <td style={{ padding: '18px 24px' }}>
-                                                                            <strong style={{ color: '#0f172a', display: 'block', fontSize: '0.98rem', fontWeight: 700 }}>{app.patientName}</strong>
-                                                                            <a href={`tel:${app.phone}`} style={{ color: '#0284c7', fontSize: '0.86rem', textDecoration: 'none', fontWeight: 600 }}>📞 {app.phone}</a>
-                                                                        </td>
+                                                                                {/* COLUMN 2: PATIENT INFO */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <strong style={{ color: '#0f172a', display: 'block', fontSize: '0.98rem', fontWeight: 700 }}>{app.patientName}</strong>
+                                                                                    <a href={`tel:${app.phone}`} style={{ color: '#0284c7', fontSize: '0.86rem', textDecoration: 'none', fontWeight: 600 }}>📞 {app.phone}</a>
+                                                                                </td>
 
-                                                                        {/* COLUMN 3: DEPARTMENT */}
-                                                                        <td style={{ padding: '18px 24px', fontWeight: 600, color: '#334155' }}>
-                                                                            {app.department}
-                                                                        </td>
+                                                                                {/* COLUMN 3: DEPARTMENT */}
+                                                                                <td style={{ padding: '18px 24px', fontWeight: 600, color: '#334155' }}>
+                                                                                    {app.department}
+                                                                                </td>
 
-                                                                        {/* COLUMN 4: APPT DATE & SLOT */}
-                                                                        <td style={{ padding: '18px 24px' }}>
-                                                                            <strong style={{ color: '#0f172a', display: 'block', fontSize: '0.9rem' }}>📅 {app.date}</strong>
-                                                                            <span style={{ color: '#64748b', fontSize: '0.82rem' }}>🕒 {app.time}</span>
-                                                                        </td>
+                                                                                {/* COLUMN 4: BOOKING SUBMISSION TIME */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem' }}>📅 {info.formattedDate}</div>
+                                                                                    <div style={{ color: '#64748b', fontSize: '0.82rem' }}>🕒 {info.formattedTime}</div>
+                                                                                </td>
 
-                                                                        {/* COLUMN 5: TRACKING ID */}
-                                                                        <td style={{ padding: '18px 24px', fontFamily: 'monospace', fontWeight: 700, color: '#0284c7', fontSize: '0.92rem' }}>
-                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                                <span>{app.trackingId}</span>
-                                                                                <button 
-                                                                                    onClick={() => copyTrackingId(app.trackingId)}
-                                                                                    type="button"
-                                                                                    title="Copy Tracking ID"
-                                                                                    style={{ background: copiedTrackingId === app.trackingId ? '#dcfce7' : '#f1f5f9', border: '1px solid #cbd5e1', color: copiedTrackingId === app.trackingId ? '#15803d' : '#64748b', borderRadius: '6px', padding: '3px 6px', fontSize: '0.72rem', cursor: 'pointer' }}
-                                                                                >
-                                                                                    {copiedTrackingId === app.trackingId ? <Check size={12} /> : <Copy size={12} />}
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
+                                                                                {/* COLUMN 5: TRACKING ID */}
+                                                                                <td style={{ padding: '18px 24px', fontFamily: 'monospace', fontWeight: 700, color: '#0284c7', fontSize: '0.92rem' }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                                        <span>{app.trackingId}</span>
+                                                                                        <button 
+                                                                                            onClick={() => copyTrackingId(app.trackingId)}
+                                                                                            type="button"
+                                                                                            title="Copy Tracking ID"
+                                                                                            style={{ background: copiedTrackingId === app.trackingId ? '#dcfce7' : '#f1f5f9', border: '1px solid #cbd5e1', color: copiedTrackingId === app.trackingId ? '#15803d' : '#64748b', borderRadius: '6px', padding: '3px 6px', fontSize: '0.72rem', cursor: 'pointer' }}
+                                                                                        >
+                                                                                            {copiedTrackingId === app.trackingId ? <Check size={12} /> : <Copy size={12} />}
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
 
-                                                                        {/* COLUMN 6: STATUS BADGE */}
-                                                                        <td style={{ padding: '18px 24px' }}>
-                                                                            <span style={{ ...getStatusBadgeStyle(app.status), padding: '6px 14px', borderRadius: '50px', fontSize: '0.82rem', fontWeight: 700, display: 'inline-block' }}>
-                                                                                {app.status}
-                                                                            </span>
-                                                                        </td>
+                                                                                {/* COLUMN 6: STATUS BADGE */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <span style={{ ...getStatusBadgeStyle(app.status), padding: '6px 14px', borderRadius: '50px', fontSize: '0.82rem', fontWeight: 700, display: 'inline-block' }}>
+                                                                                        {app.status}
+                                                                                    </span>
+                                                                                </td>
 
-                                                                        {/* COLUMN 7: ACTIONS */}
-                                                                        <td style={{ padding: '18px 24px', textAlign: 'right' }}>
-                                                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                                                                {app.status === 'Pending' && (
-                                                                                    <>
-                                                                                        <button onClick={() => updateStatus(app.id, 'Confirmed')} className="btn" style={{ background: '#16a34a', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Confirm</button>
-                                                                                        <button onClick={() => updateStatus(app.id, 'Cancelled')} className="btn" style={{ background: '#dc2626', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Cancel</button>
-                                                                                    </>
-                                                                                )}
-                                                                                {app.status === 'Confirmed' && (
-                                                                                    <button onClick={() => updateStatus(app.id, 'Completed')} className="btn" style={{ background: '#0284c7', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Mark Complete</button>
-                                                                                )}
-                                                                                {app.status === 'Completed' && (
-                                                                                    <span style={{ color: '#16a34a', fontSize: '0.8rem', fontWeight: 600 }}>✓ Done</span>
-                                                                                )}
-                                                                                <button onClick={() => deleteAppointment(app.id)} title="Delete record" style={{ background: 'transparent', color: '#94a3b8', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px' }} onMouseOver={e=>e.currentTarget.style.color='#dc2626'} onMouseOut={e=>e.currentTarget.style.color='#94a3b8'}>
-                                                                                    <Trash2 size={16} />
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
+                                                                                {/* COLUMN 7: ACTIONS */}
+                                                                                <td style={{ padding: '18px 24px', textAlign: 'right' }}>
+                                                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                                                        {app.status === 'Pending' && (
+                                                                                            <>
+                                                                                                <button onClick={() => updateStatus(app.id, 'Confirmed')} className="btn" style={{ background: '#16a34a', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Confirm</button>
+                                                                                                <button onClick={() => updateStatus(app.id, 'Cancelled')} className="btn" style={{ background: '#dc2626', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Cancel</button>
+                                                                                            </>
+                                                                                        )}
+                                                                                        {app.status === 'Confirmed' && (
+                                                                                            <button onClick={() => updateStatus(app.id, 'Completed')} className="btn" style={{ background: '#0284c7', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Mark Complete</button>
+                                                                                        )}
+                                                                                        {app.status === 'Completed' && (
+                                                                                            <span style={{ color: '#16a34a', fontSize: '0.8rem', fontWeight: 600 }}>✓ Done</span>
+                                                                                        )}
+                                                                                        <button onClick={() => deleteAppointment(app.id)} title="Delete record" style={{ background: 'transparent', color: '#94a3b8', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px' }} onMouseOver={e=>e.currentTarget.style.color='#dc2626'} onMouseOut={e=>e.currentTarget.style.color='#94a3b8'}>
+                                                                                            <Trash2 size={16} />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                {/* COLUMN 1: BOOKING CREATED TIME */}
+                                                                                <td style={{ padding: '18px 24px', whiteSpace: 'nowrap' }}>
+                                                                                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem' }}>
+                                                                                        📅 {info.formattedDate}
+                                                                                    </div>
+                                                                                    <div style={{ color: '#0284c7', fontSize: '0.84rem', fontWeight: 600, marginTop: '2px' }}>
+                                                                                        🕒 {info.formattedTime}
+                                                                                    </div>
+                                                                                </td>
+
+                                                                                {/* COLUMN 2: PATIENT INFO */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <strong style={{ color: '#0f172a', display: 'block', fontSize: '0.98rem', fontWeight: 700 }}>{app.patientName}</strong>
+                                                                                    <a href={`tel:${app.phone}`} style={{ color: '#0284c7', fontSize: '0.86rem', textDecoration: 'none', fontWeight: 600 }}>📞 {app.phone}</a>
+                                                                                </td>
+
+                                                                                {/* COLUMN 3: DEPARTMENT */}
+                                                                                <td style={{ padding: '18px 24px', fontWeight: 600, color: '#334155' }}>
+                                                                                    {app.department}
+                                                                                </td>
+
+                                                                                {/* COLUMN 4: APPT DATE & SLOT */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <strong style={{ color: '#0f172a', display: 'block', fontSize: '0.9rem' }}>📅 {app.date}</strong>
+                                                                                    <span style={{ color: '#64748b', fontSize: '0.82rem' }}>🕒 {app.time}</span>
+                                                                                </td>
+
+                                                                                {/* COLUMN 5: TRACKING ID */}
+                                                                                <td style={{ padding: '18px 24px', fontFamily: 'monospace', fontWeight: 700, color: '#0284c7', fontSize: '0.92rem' }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                                        <span>{app.trackingId}</span>
+                                                                                        <button 
+                                                                                            onClick={() => copyTrackingId(app.trackingId)}
+                                                                                            type="button"
+                                                                                            title="Copy Tracking ID"
+                                                                                            style={{ background: copiedTrackingId === app.trackingId ? '#dcfce7' : '#f1f5f9', border: '1px solid #cbd5e1', color: copiedTrackingId === app.trackingId ? '#15803d' : '#64748b', borderRadius: '6px', padding: '3px 6px', fontSize: '0.72rem', cursor: 'pointer' }}
+                                                                                        >
+                                                                                            {copiedTrackingId === app.trackingId ? <Check size={12} /> : <Copy size={12} />}
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+
+                                                                                {/* COLUMN 6: STATUS BADGE */}
+                                                                                <td style={{ padding: '18px 24px' }}>
+                                                                                    <span style={{ ...getStatusBadgeStyle(app.status), padding: '6px 14px', borderRadius: '50px', fontSize: '0.82rem', fontWeight: 700, display: 'inline-block' }}>
+                                                                                        {app.status}
+                                                                                    </span>
+                                                                                </td>
+
+                                                                                {/* COLUMN 7: ACTIONS */}
+                                                                                <td style={{ padding: '18px 24px', textAlign: 'right' }}>
+                                                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                                                        {app.status === 'Pending' && (
+                                                                                            <>
+                                                                                                <button onClick={() => updateStatus(app.id, 'Confirmed')} className="btn" style={{ background: '#16a34a', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Confirm</button>
+                                                                                                <button onClick={() => updateStatus(app.id, 'Cancelled')} className="btn" style={{ background: '#dc2626', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Cancel</button>
+                                                                                            </>
+                                                                                        )}
+                                                                                        {app.status === 'Confirmed' && (
+                                                                                            <button onClick={() => updateStatus(app.id, 'Completed')} className="btn" style={{ background: '#0284c7', color: 'white', padding: '6px 14px', fontSize: '0.8rem', borderRadius: '50px' }}>Mark Complete</button>
+                                                                                        )}
+                                                                                        {app.status === 'Completed' && (
+                                                                                            <span style={{ color: '#16a34a', fontSize: '0.8rem', fontWeight: 600 }}>✓ Done</span>
+                                                                                        )}
+                                                                                        <button onClick={() => deleteAppointment(app.id)} title="Delete record" style={{ background: 'transparent', color: '#94a3b8', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '8px' }} onMouseOver={e=>e.currentTarget.style.color='#dc2626'} onMouseOut={e=>e.currentTarget.style.color='#94a3b8'}>
+                                                                                            <Trash2 size={16} />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </>
+                                                                        )}
 
                                                                     </tr>
                                                                 </Fragment>
