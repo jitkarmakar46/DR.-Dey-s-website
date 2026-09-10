@@ -26,11 +26,28 @@ app.use(cors({
 
 app.use(express.json({ limit: '10kb' }));
 
-// 3. RATE LIMITING
+// 3. HEALTH CHECK & RATE LIMITING
+// Instant health check route - always available, never rate-limited
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+// Dedicated rate limiter for public appointment submissions to prevent spam while supporting high volume
+const bookingLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100, // 100 bookings per 15 min per IP is generous for real clinic traffic
+    message: { error: 'Too many booking attempts. Please wait a few minutes before trying again.' }
+});
+
+// Resilient API rate limiter for general routes
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
-    max: 200,   // Increased from 50 — admin polls every 15s, needs headroom
-    message: { error: 'Too many requests from this IP, please try again later.' }
+    max: 10000,   // High ceiling (10,000 req/15m) so normal browsing/refreshing never gets throttled
+    skip: (req) => {
+        // Authenticated admin operations and health checks are completely exempt
+        return Boolean(req.headers['authorization']) || req.path === '/api/health';
+    },
+    message: { error: 'Too many requests, please try again later.' }
 });
 app.use('/api/', apiLimiter);
 
@@ -60,7 +77,7 @@ app.post('/api/login', (req, res) => {
         
         const isValid = bcrypt.compareSync(password, user.password_hash);
         if (isValid) {
-            const token = jwt.sign({ role: 'admin', id: user.id }, JWT_SECRET, { expiresIn: '8h' });
+            const token = jwt.sign({ role: 'admin', id: user.id }, JWT_SECRET, { expiresIn: '30d' });
             res.json({ token });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
@@ -105,8 +122,8 @@ app.get('/api/appointments', verifyToken, (req, res) => {
     });
 });
 
-// Create a new appointment (PUBLIC)
-app.post('/api/appointments', (req, res) => {
+// Create a new appointment (PUBLIC - protected by dedicated booking rate limiter)
+app.post('/api/appointments', bookingLimiter, (req, res) => {
     let { patientName, phone, department, date, time } = req.body;
     
     if (!patientName || !phone || !department || !date || !time) {

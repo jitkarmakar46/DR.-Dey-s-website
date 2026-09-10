@@ -118,72 +118,98 @@ export default function AdminDashboard() {
     const [dateFilterField, setDateFilterField] = useState('slot_date');
     const [sortBy, setSortBy] = useState('booked_asc'); // default: date-wise queue format
 
-    const fetchAppointments = useCallback(async (isSilent = false) => {
+    const handleLogout = useCallback(() => {
+        setToken(null);
+        localStorage.removeItem('adminToken');
+    }, []);
+
+    const fetchAppointments = useCallback(async (isSilent = false, onProgress = null) => {
         const savedCache = JSON.parse(localStorage.getItem('admin_appointments_cache') || '[]');
         const savedTimestamps = JSON.parse(localStorage.getItem('clinic_booking_timestamps') || '{}');
+        const activeToken = token || localStorage.getItem('adminToken');
 
-        setIsSyncing(true);
-        try {
-            const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache'
+        if (!activeToken) {
+            if (!isSilent) setLoading(false);
+            return null;
+        }
+
+        if (!isSilent) setIsSyncing(true);
+
+        const maxAttempts = 3;
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (attempt > 1 && typeof onProgress === 'function') {
+                    onProgress(`Syncing with server database... (Connecting attempt ${attempt}/${maxAttempts})`);
                 }
-            });
-            
-            if (res.data && Array.isArray(res.data.appointments)) {
-                // 1. Fresh backend records are ALWAYS the ground truth!
-                const backendMap = new Map();
-                res.data.appointments.forEach(item => {
-                    if (item && (item.trackingId || item.id)) {
-                        const key = item.trackingId || `id_${item.id}`;
-                        backendMap.set(key, item);
-                        if (item.trackingId && item.createdAt) {
-                            savedTimestamps[item.trackingId] = item.createdAt;
-                        }
-                    }
-                });
 
-                // 2. Only preserve saved local records if not present on backend
-                savedCache.forEach(item => {
-                    if (item && (item.trackingId || item.id)) {
-                        const key = item.trackingId || `id_${item.id}`;
-                        if (!backendMap.has(key)) {
-                            const alreadyInBackend = Array.from(backendMap.values()).some(
-                                b => (b.trackingId && b.trackingId === item.trackingId) || (b.id && b.id === item.id)
-                            );
-                            if (!alreadyInBackend) {
-                                backendMap.set(key, item);
+                const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
+                    headers: { 
+                        Authorization: `Bearer ${activeToken}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    },
+                    timeout: 25000 // Resilient 25s timeout to gracefully absorb Render free-tier cold starts
+                });
+                
+                if (res.data && Array.isArray(res.data.appointments)) {
+                    // 1. Fresh backend records are ALWAYS the ground truth!
+                    const backendMap = new Map();
+                    res.data.appointments.forEach(item => {
+                        if (item && (item.trackingId || item.id)) {
+                            const key = item.trackingId || `id_${item.id}`;
+                            backendMap.set(key, item);
+                            if (item.trackingId && item.createdAt) {
+                                savedTimestamps[item.trackingId] = item.createdAt;
                             }
                         }
-                    }
-                });
+                    });
 
-                const finalLogs = Array.from(backendMap.values());
-                localStorage.setItem('clinic_booking_timestamps', JSON.stringify(savedTimestamps));
-                localStorage.setItem('admin_appointments_cache', JSON.stringify(finalLogs));
+                    // 2. Only preserve saved local records if not present on backend
+                    savedCache.forEach(item => {
+                        if (item && (item.trackingId || item.id)) {
+                            const key = item.trackingId || `id_${item.id}`;
+                            if (!backendMap.has(key)) {
+                                const alreadyInBackend = Array.from(backendMap.values()).some(
+                                    b => (b.trackingId && b.trackingId === item.trackingId) || (b.id && b.id === item.id)
+                                );
+                                if (!alreadyInBackend) {
+                                    backendMap.set(key, item);
+                                }
+                            }
+                        }
+                    });
 
-                setAppointments(finalLogs);
-                return finalLogs;
+                    const finalLogs = Array.from(backendMap.values());
+                    localStorage.setItem('clinic_booking_timestamps', JSON.stringify(savedTimestamps));
+                    localStorage.setItem('admin_appointments_cache', JSON.stringify(finalLogs));
+
+                    setAppointments(finalLogs);
+                    return finalLogs;
+                }
+            } catch (err) {
+                lastError = err;
+                if (err.response && err.response.status === 401) {
+                    handleLogout();
+                    throw err;
+                }
+                // For transient cold starts, rate limits, or network drops, back off and retry automatically
+                if (attempt < maxAttempts) {
+                    await new Promise(r => setTimeout(r, attempt * 1200));
+                }
             }
-        } catch (err) {
-            if (err.response && err.response.status === 401) {
-                handleLogout();
-            }
-            throw err;
-        } finally {
-            setIsSyncing(false);
-            setLoading(false);
         }
-    }, [token]);
+
+        throw lastError;
+    }, [token, handleLogout]);
 
     const handleManualRefresh = async () => {
         setIsSyncing(true);
         setRefreshStatus('syncing');
         setRefreshFeedback('Syncing with server database...');
         try {
-            const logs = await fetchAppointments(false);
+            const logs = await fetchAppointments(false, (msg) => setRefreshFeedback(msg));
             const count = logs ? logs.length : appointments.length;
             setRefreshStatus('success');
             setRefreshFeedback(`✓ Synchronized ${count} record${count !== 1 ? 's' : ''} from server.`);
@@ -193,13 +219,18 @@ export default function AdminDashboard() {
             }, 3000);
         } catch (e) {
             setRefreshStatus('error');
-            setRefreshFeedback('⚠ Failed to refresh from server. Keeping current logs.');
+            if (e && e.response && e.response.status === 401) {
+                setRefreshFeedback('⚠ Session expired. Please log in again.');
+            } else {
+                setRefreshFeedback('⚠ Network connection slow. Keeping current records safe.');
+            }
             setTimeout(() => {
                 setRefreshStatus('idle');
                 setRefreshFeedback('');
             }, 3500);
         } finally {
             setIsSyncing(false);
+            setLoading(false);
         }
     };
 
@@ -213,17 +244,29 @@ export default function AdminDashboard() {
         }
     }, [token]);
 
-    // Live Real-Time Auto-Sync Effect (Polls smoothly every 10 seconds for zero-refresh updates)
+    // Live Real-Time Auto-Sync Effect (Polls smoothly when tab is visible)
     useEffect(() => {
         if (!token) return;
 
         fetchAppointments(false); // Initial load
 
-        const interval = setInterval(() => {
-            fetchAppointments(true); // Silent background sync
-        }, 15000);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchAppointments(true);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
-        return () => clearInterval(interval);
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                fetchAppointments(true); // Silent background sync
+            }
+        }, 20000);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [token, fetchAppointments]);
 
     const handleLogin = async (e) => {
@@ -237,11 +280,6 @@ export default function AdminDashboard() {
         } catch (err) {
             setLoginError('Incorrect password or server error');
         }
-    };
-
-    const handleLogout = () => {
-        setToken(null);
-        localStorage.removeItem('adminToken');
     };
 
     const updateStatus = async (id, status) => {
