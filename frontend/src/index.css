@@ -33,23 +33,42 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--sans); -webkit-tap-highlight-color: transparent !important; }
-html, body {
+html {
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background-color: #f0f7ff;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+}
+
+/* GPU-accelerated fixed ambient background — zero repaint penalty during scrolling */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background: 
         radial-gradient(ellipse 80% 50% at 20% 10%, rgba(56, 189, 248, 0.18) 0%, transparent 60%),
         radial-gradient(ellipse 70% 50% at 85% 30%, rgba(129, 140, 248, 0.14) 0%, transparent 60%),
         radial-gradient(ellipse 80% 60% at 50% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 70%),
         radial-gradient(ellipse 60% 45% at 15% 85%, rgba(192, 132, 252, 0.12) 0%, transparent 60%),
         linear-gradient(180deg, #f0f7ff 0%, #f8fafc 40%, #f1f5f9 100%);
-    background-attachment: fixed;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    pointer-events: none;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
 }
 .app-container { min-height: 100vh; display: flex; flex-direction: column; }
 .main-content { flex: 1; }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
 /* ============================================================
-   TOP HEADER — Logo only, centered elegantly
+   TOP HEADER — Apple Liquid Glass (Centered logo / desktop flex)
    ============================================================ */
 .top-header {
     position: sticky;
@@ -59,11 +78,27 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.38) 100%);
-    backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    border-bottom: 1.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(0, 70, 150, 0.05);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.14) 100%);
+    backdrop-filter: blur(8px) saturate(240%) contrast(120%) brightness(105%);
+    -webkit-backdrop-filter: blur(8px) saturate(240%) contrast(120%) brightness(105%);
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.35),
+        0 8px 24px rgba(0, 70, 150, 0.06);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+.top-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 25%, rgba(255, 255, 255, 0.95) 75%, transparent 100%);
+    pointer-events: none;
 }
 
 .logo, .logo-centered {
@@ -79,13 +114,14 @@ html, body {
 }
 
 /* ============================================================
-   BOTTOM TAB BAR (MOBILE FLOATING ISLAND BASE)
+   BOTTOM TAB BAR (APPLE LIQUID GLASS FLOATING ISLAND)
    ============================================================ */
 .bottom-nav {
     position: fixed;
     bottom: 16px;
     left: 50%;
-    transform: translateX(-50%) translateZ(0);
+    transform: translateX(-50%) translate3d(0, 0, 0);
+    -webkit-transform: translateX(-50%) translate3d(0, 0, 0);
     width: calc(100% - 28px);
     max-width: 390px;
     height: 64px;
@@ -100,35 +136,37 @@ html, body {
     /* Apple Liquid Glass Material - Translucent with Refractive Luster */
     background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.32) 0%,
-        rgba(255, 255, 255, 0.12) 50%,
-        rgba(235, 248, 255, 0.26) 100%
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.05) 45%,
+        rgba(202, 240, 248, 0.18) 100%
     );
 
-    /* Intense Optical Blur & Dispersion (Refracting text and content underneath on scroll) */
-    -webkit-backdrop-filter: blur(20px) saturate(220%) contrast(116%) brightness(106%);
-    backdrop-filter: blur(20px) saturate(220%) contrast(116%) brightness(106%);
+    /* Apple Liquid Glass Optical Refraction:
+       Sharp 7px blur preserves text outlines, magnifies letter strokes, and distorts content realistically
+       instead of obliterating text into a foggy smudge. 240% saturation makes underlying text colors shine through */
+    -webkit-backdrop-filter: blur(7px) saturate(240%) contrast(125%) brightness(108%);
+    backdrop-filter: blur(7px) saturate(240%) contrast(125%) brightness(108%);
 
     /* Liquid Glass Caustic Bevel & Specular Light Highlights */
-    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    border: 1.25px solid rgba(255, 255, 255, 0.85);
     box-shadow: 
-        inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),  /* Top liquid meniscus specular reflection */
-        inset 0 -1.5px 1.5px 0 rgba(255, 255, 255, 0.35), /* Bottom caustic bounce reflection */
-        inset 0 0 22px 0 rgba(255, 255, 255, 0.30),       /* Inner volumetric luminescence */
-        0 14px 34px -4px rgba(0, 50, 120, 0.16),         /* Ambient water-refracted drop shadow */
-        0 4px 14px -2px rgba(0, 0, 0, 0.08);
+        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),  /* Top liquid meniscus specular reflection */
+        inset 0 -1.5px 2px 0 rgba(255, 255, 255, 0.40),   /* Bottom caustic bounce reflection */
+        inset 0 0 16px 0 rgba(255, 255, 255, 0.20),         /* Inner volumetric luminescence */
+        0 14px 34px -4px rgba(0, 50, 120, 0.15),           /* Ambient water-refracted drop shadow */
+        0 4px 12px -2px rgba(0, 0, 0, 0.06);
 }
 
-/* Curved Lens Top Glare Reflection (Apple Glass Look) */
+/* Curved Lens Top Glare Sheen */
 .bottom-nav::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 8%;
-    right: 8%;
-    height: 50%;
+    left: 6%;
+    right: 6%;
+    height: 48%;
     border-radius: 9999px 9999px 0 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.08) 80%, transparent 100%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.05) 80%, transparent 100%);
     pointer-events: none;
     z-index: 1;
 }
@@ -145,7 +183,7 @@ html, body {
         rgba(255, 255, 255, 0.95) 0%, 
         rgba(255, 255, 255, 0.25) 35%, 
         rgba(186, 230, 253, 0.45) 70%, 
-        rgba(255, 255, 255, 0.70) 100%
+        rgba(255, 255, 255, 0.75) 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -211,14 +249,14 @@ html, body {
     height: 48px;
     margin-top: -24px;
     border-radius: 9999px;
-    background: linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(255, 255, 255, 0.42) 100%);
-    border: 1px solid rgba(2, 132, 199, 0.32);
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.18) 0%, rgba(255, 255, 255, 0.35) 100%);
+    border: 1px solid rgba(2, 132, 199, 0.35);
     box-shadow: 
         inset 0 1px 2px 0 rgba(255, 255, 255, 0.95),
         inset 0 -1px 2px 0 rgba(2, 132, 199, 0.18),
-        0 4px 14px rgba(2, 132, 199, 0.22);
-    backdrop-filter: blur(12px) saturate(190%);
-    -webkit-backdrop-filter: blur(12px) saturate(190%);
+        0 4px 14px rgba(2, 132, 199, 0.20);
+    backdrop-filter: blur(6px) saturate(220%) contrast(120%);
+    -webkit-backdrop-filter: blur(6px) saturate(220%) contrast(120%);
     z-index: 1;
     pointer-events: none;
     transition:
@@ -574,26 +612,11 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
         --bot-h: 66px;
     }
 
-    /* Top header */
-    .top-header {
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    height: var(--top-h);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.38) 100%);
-    backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    border-bottom: 1.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(0, 70, 150, 0.05);
-}
     .logo-centered { font-size: 1.05rem; }
 
     /* Bottom nav liquid island sizing is managed by island component */
 
-    html, body, .app-container { scroll-snap-type: none !important; scroll-behavior: smooth !important; }
+    html, body, .app-container { scroll-snap-type: none !important; scroll-behavior: auto !important; }
     body { padding-bottom: var(--bot-h); }
 
     .section, .hero {
@@ -727,22 +750,8 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
 .desktop-nav a:hover, .desktop-nav a.active { color: var(--blue); }
 /* nav-pill inside desktop-nav inherits the .nav-pill rules already defined */
 
-/* On desktop: top-header is a proper flex row — logo left, nav right */
+/* On desktop: logo left, nav right */
 @media (min-width: 769px) {
-    .top-header {
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    height: var(--top-h);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.38) 100%);
-    backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    border-bottom: 1.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(0, 70, 150, 0.05);
-}
     /* Logo aligns left on desktop */
     .logo-centered { margin: 0; }
     /* Bottom nav is completely hidden on desktop */
@@ -756,21 +765,6 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; width: 100%;
 /* On mobile: hide desktop nav, show bottom nav */
 @media (max-width: 768px) {
     .desktop-nav { display: none !important; }
-    /* Logo stays centered on mobile */
-    .top-header {
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    height: var(--top-h);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.38) 100%);
-    backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(108%);
-    border-bottom: 1.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(0, 70, 150, 0.05);
-}
 }
 
 /* ============================================================

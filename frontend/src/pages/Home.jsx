@@ -128,7 +128,11 @@ export default function Home() {
         if (navClickTimerRef.current) clearTimeout(navClickTimerRef.current);
         navClickTimerRef.current = setTimeout(() => {
             isNavClickingRef.current = false;
-        }, 900);
+        }, 800);
+        const el = document.getElementById(sectionKey);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     // Update BOTH desktop + mobile pill positions whenever activeSection changes
@@ -162,11 +166,11 @@ export default function Home() {
                 if (entry.isIntersecting) {
                     const id = entry.target.id;
                     const navKey = id === 'appointment' ? 'appointment' : id;
-                    setActiveSection(navKey);
+                    setActiveSection(prev => prev === navKey ? prev : navKey);
                 }
             });
         }, {
-            threshold: 0.4,
+            threshold: 0.35,
             rootMargin: '0px 0px 0px 0px'
         });
 
