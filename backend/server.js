@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const db = require('./database');
 
 const app = express();
@@ -13,16 +15,69 @@ app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 5005;
 const JWT_SECRET = 'super_secret_jwt_key_for_dr_dey_clinic'; // In production, move to .env
+const backupPath = path.resolve(__dirname, 'appointments_backup.json');
 
-// 1. SECURITY HEADER MIDDLEWARE
-app.use(helmet());
+// --- PERSISTENCE HELPERS ---
+const saveBackup = () => {
+    db.all("SELECT id, trackingId, patientName, phone, department, date, time, status, createdAt FROM appointments ORDER BY createdAt ASC", [], (err, rows) => {
+        if (!err && Array.isArray(rows)) {
+            try {
+                fs.writeFileSync(backupPath, JSON.stringify(rows, null, 2), 'utf8');
+            } catch (e) {
+                console.error('Backup write error:', e);
+            }
+        }
+    });
+};
 
-// 2. RESTRICTED CORS
+const restoreBackup = () => {
+    try {
+        if (fs.existsSync(backupPath)) {
+            const raw = fs.readFileSync(backupPath, 'utf8');
+            const list = JSON.parse(raw);
+            if (Array.isArray(list) && list.length > 0) {
+                const insertSql = `INSERT OR IGNORE INTO appointments (trackingId, patientName, phone, department, date, time, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                db.serialize(() => {
+                    const stmt = db.prepare(insertSql);
+                    list.forEach(a => {
+                        if (a && a.trackingId) {
+                            stmt.run([
+                                a.trackingId,
+                                a.patientName,
+                                a.phone,
+                                a.department || 'General Checkup',
+                                a.date,
+                                a.time,
+                                a.status || 'Pending',
+                                a.createdAt || new Date().toISOString()
+                            ]);
+                        }
+                    });
+                    stmt.finalize();
+                });
+                console.log(`Restored ${list.length} appointments from backup JSON.`);
+            }
+        }
+    } catch (e) {
+        console.error('Restore error:', e);
+    }
+};
+
+setTimeout(restoreBackup, 500);
+
+// 1. SECURITY HEADER MIDDLEWARE (Permit cross-origin browser access)
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// 2. UNRESTRICTED CORS (Supports cross-origin browser calls & all client headers)
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With', 'Accept', 'Origin'],
+    credentials: false
 }));
+app.options('*', cors());
 
 app.use(express.json({ limit: '10kb' }));
 
@@ -154,6 +209,7 @@ app.post('/api/appointments', bookingLimiter, (req, res) => {
             console.error('DB Error:', err);
             return res.status(500).json({ error: 'Internal server error' });
         }
+        saveBackup();
         res.status(201).json({ 
             message: 'Appointment booked successfully', 
             appointmentId: this.lastID,
@@ -189,6 +245,7 @@ app.post('/api/appointments/sync', verifyToken, (req, res) => {
             }
         });
         stmt.finalize(() => {
+            saveBackup();
             db.all("SELECT id, trackingId, patientName, phone, department, date, time, status, createdAt FROM appointments ORDER BY createdAt ASC", [], (err, rows) => {
                 if (err) return res.status(500).json({ error: 'Internal server error' });
                 res.json({ appointments: rows, syncedCount: rows.length });
@@ -211,6 +268,7 @@ app.put('/api/appointments/:id/status', verifyToken, (req, res) => {
         if (err) {
             return res.status(500).json({ error: 'Internal server error' });
         }
+        saveBackup();
         res.json({ message: 'Status updated successfully', changes: this.changes });
     });
 });
@@ -223,6 +281,7 @@ app.delete('/api/appointments/:id', verifyToken, (req, res) => {
         if (err) {
             return res.status(500).json({ error: 'Internal server error' });
         }
+        saveBackup();
         res.json({ message: 'Appointment deleted successfully', changes: this.changes });
     });
 });

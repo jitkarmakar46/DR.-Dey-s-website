@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "trackingId": "DEY-D95E3E",
+    "patientName": "jt",
+    "phone": "8976789088",
+    "department": "General Checkup",
+    "date": "2026-09-10",
+    "time": "Morning",
+    "status": "Confirmed",
+    "createdAt": "2026-09-10T07:15:00.000Z"
+  },
+  {
+    "id": 2,
+    "trackingId": "DEY-BC6A5B",
+    "patientName": "jiy",
+    "phone": "9898767689",
+    "department": "General Checkup",
+    "date": "2026-09-18",
+    "time": "Morning",
+    "status": "Pending",
+    "createdAt": "2026-09-09T08:30:00.000Z"
+  },
+  {
+    "id": 3,
+    "trackingId": "DEY-40770A",
+    "patientName": "joh nor",
+    "phone": "9098765645",
+    "department": "Fever",
+    "date": "2026-09-10",
+    "time": "Evening",
+    "status": "Pending",
+    "createdAt": "2026-09-10T07:45:00.000Z"
+  }
+]

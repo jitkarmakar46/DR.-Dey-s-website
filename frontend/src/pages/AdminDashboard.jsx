@@ -159,9 +159,7 @@ export default function AdminDashboard() {
 
                     const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
                         headers: { 
-                            Authorization: `Bearer ${activeToken}`,
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache'
+                            Authorization: `Bearer ${activeToken}`
                         },
                         timeout: 25000 // Resilient 25s timeout to gracefully absorb Render free-tier cold starts
                     });
