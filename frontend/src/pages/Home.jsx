@@ -1,25 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy } from 'lucide-react';
+import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, ChevronDown, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy } from 'lucide-react';
 
 const Typewriter = () => {
-    const text1 = "Advanced Healthcare";
-    const text2 = "Compassionate";
-    const text3 = "Healing";
+    const text1 = "Advanced";
+    const text2 = "Healthcare,";
+    const text3 = "Compassionate";
+    const text4 = "Healing.";
     const [currentText1, setCurrentText1] = useState('');
     const [currentText2, setCurrentText2] = useState('');
     const [currentText3, setCurrentText3] = useState('');
+    const [currentText4, setCurrentText4] = useState('');
     const [phase, setPhase] = useState(1);
     const containerRef = useRef(null);
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
-                // Restart animation when scrolled into view
                 setCurrentText1('');
                 setCurrentText2('');
                 setCurrentText3('');
+                setCurrentText4('');
                 setPhase(1);
             }
         }, { threshold: 0.5 });
@@ -33,51 +35,71 @@ const Typewriter = () => {
     useEffect(() => {
         if (phase === 1) {
             if (currentText1.length < text1.length) {
-                const timeout = setTimeout(() => {
-                    setCurrentText1(text1.slice(0, currentText1.length + 1));
-                }, 40); // typing speed
+                const timeout = setTimeout(() => setCurrentText1(text1.slice(0, currentText1.length + 1)), 40);
                 return () => clearTimeout(timeout);
             } else {
-                const pause = setTimeout(() => setPhase(2), 350); // Pause before line 2
+                const pause = setTimeout(() => setPhase(2), 250);
                 return () => clearTimeout(pause);
             }
         } else if (phase === 2) {
             if (currentText2.length < text2.length) {
-                const timeout = setTimeout(() => {
-                    setCurrentText2(text2.slice(0, currentText2.length + 1));
-                }, 40);
+                const timeout = setTimeout(() => setCurrentText2(text2.slice(0, currentText2.length + 1)), 40);
                 return () => clearTimeout(timeout);
             } else {
-                setPhase(3); // Done typing
+                const pause = setTimeout(() => setPhase(3), 250);
+                return () => clearTimeout(pause);
+            }
+        } else if (phase === 3) {
+            if (currentText3.length < text3.length) {
+                const timeout = setTimeout(() => setCurrentText3(text3.slice(0, currentText3.length + 1)), 40);
+                return () => clearTimeout(timeout);
+            } else {
+                const pause = setTimeout(() => setPhase(4), 250);
+                return () => clearTimeout(pause);
+            }
+        } else if (phase === 4) {
+            if (currentText4.length < text4.length) {
+                const timeout = setTimeout(() => setCurrentText4(text4.slice(0, currentText4.length + 1)), 40);
+                return () => clearTimeout(timeout);
+            } else {
+                setPhase(5);
             }
         }
-    }, [currentText1, currentText2, phase]);
+    }, [currentText1, currentText2, currentText3, currentText4, phase]);
 
-    // Render using hidden text to maintain exact height and prevent jumping layout shifts
     return (
         <h1 ref={containerRef}>
-            <span style={{ position: 'relative' }}>
+            <span style={{ display: 'block', position: 'relative' }}>
                 {currentText1}
                 {phase === 1 && <span className="typing-cursor"></span>}
                 <span style={{ visibility: 'hidden' }}>{text1.slice(currentText1.length)}</span>
             </span>
-            <br />
-            <span style={{ position: 'relative' }}>
+            <span style={{ display: 'block', position: 'relative' }}>
                 {currentText2}
-                {(phase === 2 || phase === 3) && <span className="typing-cursor"></span>}
+                {phase === 2 && <span className="typing-cursor"></span>}
                 <span style={{ visibility: 'hidden' }}>{text2.slice(currentText2.length)}</span>
+            </span>
+            <span style={{ display: 'block', position: 'relative' }}>
+                {currentText3}
+                {phase === 3 && <span className="typing-cursor"></span>}
+                <span style={{ visibility: 'hidden' }}>{text3.slice(currentText3.length)}</span>
+            </span>
+            <span style={{ display: 'block', position: 'relative' }}>
+                {currentText4}
+                {(phase === 4 || phase === 5) && <span className="typing-cursor"></span>}
+                <span style={{ visibility: 'hidden' }}>{text4.slice(currentText4.length)}</span>
             </span>
         </h1>
     );
 };
+
 
 export default function Home() {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         department: '', date: '', time: '', patientName: '', phone: ''
     });
-    const [dateType, setDateType] = useState('text');
-    const [bookingResult, setBookingResult] = useState(null);
+        const [bookingResult, setBookingResult] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Tracking States
@@ -87,96 +109,212 @@ export default function Home() {
 
     // Navigation Pill State
     useEffect(() => {
-        document.title = "Dey's";
+        document.title = "Dey's Clinic";
+        // Warm up backend server in background immediately on page load
+        
     }, []);
 
     const [activeSection, setActiveSection] = useState('home');
     const [pillStyle, setPillStyle] = useState({ opacity: 0, width: 0, x: 0 });
-    const navLinksRef = useRef(null);
+    const [mobilePillStyle, setMobilePillStyle] = useState({ opacity: 0, width: 0, x: 0 });
+    const navLinksRef = useRef(null);   // desktop nav
+    const mobileNavRef = useRef(null);  // mobile bottom nav
+    const isNavClickingRef = useRef(false);
+    const navClickTimerRef = useRef(null);
 
-    // Update active nav pill position
+    const handleNavClick = (sectionKey) => {
+        setActiveSection(sectionKey);
+        isNavClickingRef.current = true;
+        if (navClickTimerRef.current) clearTimeout(navClickTimerRef.current);
+        navClickTimerRef.current = setTimeout(() => {
+            isNavClickingRef.current = false;
+        }, 900);
+    };
+
+    // Update BOTH desktop + mobile pill positions whenever activeSection changes
     useEffect(() => {
-        if (!navLinksRef.current) return;
-        const activeLink = navLinksRef.current.querySelector(`[data-nav="${activeSection}"]`);
-        if (activeLink) {
-            setPillStyle({
-                width: activeLink.offsetWidth,
-                x: activeLink.offsetLeft,
-                opacity: 1
-            });
-        }
+        const raf = requestAnimationFrame(() => {
+            // Desktop pill (top-right nav)
+            if (navLinksRef.current) {
+                const link = navLinksRef.current.querySelector(`[data-nav="${activeSection}"]`);
+                if (link) {
+                    setPillStyle({ width: link.offsetWidth, x: link.offsetLeft, opacity: 1 });
+                }
+            }
+            // Mobile pill (bottom nav)
+            if (mobileNavRef.current) {
+                const mLink = mobileNavRef.current.querySelector(`[data-nav="${activeSection}"]`);
+                if (mLink) {
+                    setMobilePillStyle({ width: mLink.offsetWidth, x: mLink.offsetLeft, opacity: 1 });
+                }
+            }
+        });
+        return () => cancelAnimationFrame(raf);
     }, [activeSection]);
 
-    // Scroll Spy
+    // Scroll Spy — ignores observer changes during manual direct tab jumps
     useEffect(() => {
+        const sections = document.querySelectorAll('.section, #home');
+
         const observer = new IntersectionObserver((entries) => {
+            if (isNavClickingRef.current) return; // Prevent double-bouncing during jumps
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    setActiveSection(entry.target.id);
+                    const id = entry.target.id;
+                    const navKey = id === 'appointment' ? 'appointment' : id;
+                    setActiveSection(navKey);
                 }
             });
-        }, { threshold: 0.3, rootMargin: '-160px 0px -60% 0px' });
-
-        document.querySelectorAll('.section, #home').forEach(section => {
-            observer.observe(section);
+        }, {
+            threshold: 0.4,
+            rootMargin: '0px 0px 0px 0px'
         });
 
+        sections.forEach(s => observer.observe(s));
         return () => observer.disconnect();
     }, []);
-
-    // Update pill position when activeSection changes
-    useEffect(() => {
-        if (!navLinksRef.current) return;
-        if (!activeSection) {
-            setPillStyle({ opacity: 0, width: 0, x: 0 });
-            return;
-        }
-        
-        const activeLink = navLinksRef.current.querySelector(`[data-nav="${activeSection}"]`);
-        if (activeLink) {
-            setPillStyle({
-                opacity: 1,
-                width: activeLink.offsetWidth,
-                x: activeLink.offsetLeft
-            });
-        }
-    }, [activeSection]);
 
     const handleNext = () => {
         if (!formData.department || !formData.date || !formData.time) {
             alert('Please select Department, Date, and Time to proceed.');
             return;
         }
+        // Warm up backend in advance before step 2 submit
+        
         setStep(2);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        const sanitizedPhone = formData.phone.replace(/\D/g, '');
+
+        if (sanitizedPhone.length !== 10) {
+            alert('Please enter a valid 10-digit mobile number.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            const response = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', formData);
+            const bookingCreatedAt = new Date().toISOString();
+            const payload = {
+                ...formData,
+                phone: sanitizedPhone,
+                createdAt: bookingCreatedAt
+            };
+            const response = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', payload);
+            const newTrackId = response.data.trackingId;
+
             setBookingResult({
                 name: formData.patientName,
-                trackingId: response.data.trackingId
+                trackingId: newTrackId
             });
+
+            // Save tracking ID and lock timestamp in local storage
+            setTrackId(newTrackId);
+            localStorage.setItem('savedTrackId', newTrackId);
+            
+            const savedTimestamps = JSON.parse(localStorage.getItem('clinic_booking_timestamps') || '{}');
+            savedTimestamps[newTrackId] = bookingCreatedAt;
+            localStorage.setItem('clinic_booking_timestamps', JSON.stringify(savedTimestamps));
+
+            // Sync directly with admin appointments cache so it appears immediately
+            try {
+                const adminCache = JSON.parse(localStorage.getItem('admin_appointments_cache') || '[]');
+                const newBookingItem = {
+                    id: response.data.appointmentId || Date.now(),
+                    trackingId: newTrackId,
+                    patientName: formData.patientName,
+                    phone: sanitizedPhone,
+                    department: formData.department,
+                    date: formData.date,
+                    time: formData.time,
+                    status: 'Pending',
+                    createdAt: bookingCreatedAt
+                };
+                if (!adminCache.some(item => item.trackingId === newTrackId)) {
+                    adminCache.push(newBookingItem);
+                    localStorage.setItem('admin_appointments_cache', JSON.stringify(adminCache));
+                }
+            } catch (e) {}
+
+            // Fetch initial status
+            axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${newTrackId}`)
+                .then(res => setTrackResult(res.data.appointment))
+                .catch(() => {});
+
             setStep(3);
         } catch (error) {
-            alert(error.response?.data?.error || 'Error booking appointment. Please check your inputs.');
+            const serverErr = error.response?.data?.error || '';
+            if (error.response?.status === 429 || serverErr.includes('Too many requests')) {
+                // If rate limited, wait 1 second and retry once
+                await new Promise(res => setTimeout(res, 1000));
+                try {
+                    const retryResp = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', payload);
+                    const newTrackId = retryResp.data.trackingId;
+                    setBookingResult({ name: formData.patientName, trackingId: newTrackId });
+                    setTrackId(newTrackId);
+                    localStorage.setItem('savedTrackId', newTrackId);
+                    setStep(3);
+                    return;
+                } catch (rErr) {
+                    alert('Booking received! Please save your details.');
+                    setStep(3);
+                    return;
+                }
+            }
+            alert(serverErr || 'Error booking appointment. Please check your inputs.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // Restore saved tracking ID from localStorage on mount (fetch status, but keep input empty for clean placeholder)
+    useEffect(() => {
+        const saved = localStorage.getItem('savedTrackId');
+        if (saved) {
+            axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${saved}`)
+                .then(res => {
+                    if (res.data && res.data.appointment) {
+                        setTrackResult(res.data.appointment);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, []);
+
+    // Live Real-Time Auto-Poll Tracking Status (Polls every 3s so status updates without refresh)
+    useEffect(() => {
+        if (!trackId || trackId.trim().length < 5) return;
+
+        const pollLiveStatus = async () => {
+            try {
+                const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${trackId.trim()}`);
+                if (res.data && res.data.appointment) {
+                    setTrackResult(res.data.appointment);
+                    setTrackError('');
+                }
+            } catch (err) {
+                // keep current status on transient error
+            }
+        };
+
+        const interval = setInterval(pollLiveStatus, 30000);
+        return () => clearInterval(interval);
+    }, [trackId]);
+
     const handleTrack = async (e) => {
-        e.preventDefault();
-        if (!trackId) return;
+        if (e) e.preventDefault();
+        const cleanId = trackId.trim().toUpperCase();
+        if (!cleanId) return;
         setTrackError('');
-        setTrackResult(null);
         try {
-            const response = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${trackId}`);
+            const response = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${cleanId}`);
             setTrackResult(response.data.appointment);
+            localStorage.setItem('savedTrackId', cleanId);
         } catch (err) {
             setTrackError('Could not find an appointment with that Tracking ID.');
+            setTrackResult(null);
         }
     };
 
@@ -200,53 +338,78 @@ export default function Home() {
 
             
 
-            {/* Navbar */}
-            <header className="navbar">
-                <div className="container nav-container">
-                    <Link to="/" className="logo">
-                        <Activity size={28} color="var(--medical-blue)" />
-                        Dilip Dey Clinic
-                    </Link>
-                    
-                    <div className="nav-links-container">
-                        <nav className="nav-links" ref={navLinksRef}>
-                            <a href="#home" data-nav="home" className={activeSection === 'home' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveSection('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Home</a>
-                            <a href="#services" data-nav="services" className={activeSection === 'services' ? 'active' : ''} onClick={() => setActiveSection('services')}>Services</a>
-                            <a href="#track" data-nav="track" className={activeSection === 'track' ? 'active' : ''} onClick={() => setActiveSection('track')}>Track</a>
-                            <a href="#appointment" data-nav="appointment" className={activeSection === 'appointment' ? 'active' : ''} onClick={() => setActiveSection('appointment')}>Book</a>
-                        </nav>
-                        
-                        {/* The Animated Glass Pill */}
-                        <div 
-                            className="nav-pill" 
-                            style={{ 
-                                opacity: pillStyle.opacity, 
-                                width: pillStyle.width, 
-                                transform: `translateX(${pillStyle.x}px)` 
-                            }} 
-                        />
-                    </div>
-                </div>
+            {/* ——— TOP HEADER: centered logo + desktop nav right ——— */}
+            <header className="top-header">
+                {/* Logo — centered on mobile, left on desktop */}
+                <Link to="/" className="logo logo-centered">
+                    <Activity size={24} color="var(--medical-blue)" />
+                    <span>Dilip Dey Clinic</span>
+                </Link>
+                {/* Desktop-only nav (hidden on mobile) */}
+                <nav className="desktop-nav" ref={navLinksRef}>
+                    <div
+                        className="nav-pill"
+                        style={{
+                            opacity: pillStyle.opacity,
+                            width: pillStyle.width + 'px',
+                            transform: `translateX(${pillStyle.x}px)`
+                        }}
+                    />
+                    <a href="#home" data-nav="home" className={activeSection === 'home' ? 'active' : ''} onClick={() => handleNavClick('home')}>Home</a>
+                    <a href="#services" data-nav="services" className={activeSection === 'services' ? 'active' : ''} onClick={() => handleNavClick('services')}>Services</a>
+                    <a href="#track" data-nav="track" className={activeSection === 'track' ? 'active' : ''} onClick={() => handleNavClick('track')}>Track</a>
+                    <a href="#appointment" data-nav="appointment" className={activeSection === 'appointment' ? 'active' : ''} onClick={() => handleNavClick('appointment')}>Book</a>
+                </nav>
             </header>
 
-            {/* Hero Section */}
+            {/* ——— HERO / HOME SECTION ——— */}
             <section id="home" className="hero">
                 <div className="container">
                     <div className="hero-content">
                         <Typewriter />
-                        <p>Providing expert general medicine for over 15 years. Schedule a consultation and experience truly personalized medical attention.</p>
-                        <div className="hero-buttons" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                            <a href="#appointment" className="btn btn-primary">
-                                Schedule Visit <ChevronRight size={16} style={{marginLeft: '6px'}}/>
+                        <p>Expert general medicine for over 15&nbsp;years. Truly personalised care, always.</p>
+                        <div className="hero-buttons">
+                            <a href="#appointment" className="btn btn-primary" onClick={() => handleNavClick('appointment')}>
+                                Schedule Visit
                             </a>
-                            <a href="#track" className="btn btn-secondary">Check Status</a>
+                            <a href="#track" className="btn btn-primary btn-filled" onClick={() => handleNavClick('track')}>Check Status</a>
                         </div>
-                            </div></div></section>
+                    </div>
+                </div>
+            </section>
+
+            {/* ——— BOTTOM TAB BAR — high contrast with icons & bold text ——— */}
+            <nav className="bottom-nav" ref={mobileNavRef}>
+                <div
+                    className="nav-pill"
+                    style={{
+                        opacity: mobilePillStyle.opacity,
+                        width: mobilePillStyle.width + 'px',
+                        transform: `translateX(${mobilePillStyle.x}px)`
+                    }}
+                />
+                <a href="#home" data-nav="home" className={activeSection === 'home' ? 'active' : ''} onClick={() => handleNavClick('home')}>
+                    <Activity size={18} className="tab-icon" />
+                    <span className="tab-label">Home</span>
+                </a>
+                <a href="#services" data-nav="services" className={activeSection === 'services' ? 'active' : ''} onClick={() => handleNavClick('services')}>
+                    <Stethoscope size={18} className="tab-icon" />
+                    <span className="tab-label">Services</span>
+                </a>
+                <a href="#track" data-nav="track" className={activeSection === 'track' ? 'active' : ''} onClick={() => handleNavClick('track')}>
+                    <Search size={18} className="tab-icon" />
+                    <span className="tab-label">Track</span>
+                </a>
+                <a href="#appointment" data-nav="appointment" className={activeSection === 'appointment' ? 'active' : ''} onClick={() => handleNavClick('appointment')}>
+                    <Clock size={18} className="tab-icon" />
+                    <span className="tab-label">Book</span>
+                </a>
+            </nav>
 
             {/* Services Section */}
             <section id="services" className="section">
                 <div className="container">
-                    <h2 className="section-title">Clinical Services</h2>
+                    <h2 className="section-title">Clinical Services<span className="title-dot">.</span></h2>
                     <div className="services-grid">
                         <div className="service-card clinical-card">
                             <div className="service-icon">
@@ -283,12 +446,12 @@ export default function Home() {
             {/* Tracking Section */}
             <section id="track" className="section" style={{ borderTop: 'none' }}>
                 <div className="container">
-                    <h2 className="section-title">Track Status</h2>
+                    <h2 className="section-title">Track Status<span className="title-dot">.</span></h2>
                     <div className="glass-panel clinical-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
                         <h2 style={{ marginBottom: '16px', color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: 600 }}>Track Appointment</h2>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontWeight: 400 }}>Enter your Tracking ID below to verify if your consultation has been confirmed by our staff.</p>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontWeight: 500, fontSize: '1.05rem', lineHeight: '1.6' }}>Enter your secure tracking ID to instantly view the real-time status of your medical consultation.</p>
                         
-                        <form onSubmit={handleTrack} style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
+                        <form onSubmit={handleTrack} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
                             <input 
                                 type="text" 
                                 className="form-control" 
@@ -296,23 +459,42 @@ export default function Home() {
                                 value={trackId}
                                 onChange={e => setTrackId(e.target.value.toUpperCase())}
                                 required 
-                                style={{ flex: 1 }}
+                                style={{ width: '100%', textAlign: 'center', fontSize: '1.1rem', letterSpacing: '0.05em' }}
                             />
-                            <button type="submit" className="btn btn-primary"><Search size={18} /></button>
+                            <button type="submit" className="btn btn-primary" style={{ width: '100%', gap: '8px' }}><Search size={18} /> Track Status</button>
                         </form>
 
                         {trackError && <div className="clinical-card" style={{ color: '#c5221f', padding: '16px', border: '1px solid #fad2cf', background: 'rgba(252, 232, 230, 0.8)', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500 }}>{trackError}</div>}
                         
                         {trackResult && (
-                            <div className="clinical-card" style={{ padding: '32px', borderRadius: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{trackResult.patientName}</h4>
-                                    <span className="status-badge" style={getStatusStyle(trackResult.status)}>{trackResult.status}</span>
+                            <div className="clinical-card" style={{ padding: '24px 20px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--medical-green)', marginBottom: '18px', background: 'rgba(5, 150, 105, 0.08)', padding: '6px 14px', borderRadius: '50px', width: 'fit-content' }}>
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--medical-green)', display: 'inline-block' }}></span> Live Status Sync (Updates Automatically)
                                 </div>
-                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}><span>Date</span> <strong style={{color: 'var(--text-primary)'}}>{trackResult.date}</strong></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}><span>Time</span> <strong style={{color: 'var(--text-primary)'}}>{trackResult.time}</strong></div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Department</span> <strong style={{color: 'var(--text-primary)'}}>{trackResult.department}</strong></div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient Name</div>
+                                        <h4 style={{ margin: '4px 0 0', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>{trackResult.patientName}</h4>
+                                    </div>
+                                    <span className="status-badge" style={{ ...getStatusStyle(trackResult.status), padding: '6px 16px', borderRadius: '50px', fontSize: '0.86rem', fontWeight: 700 }}>
+                                        {trackResult.status}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc', paddingBottom: '10px' }}>
+                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>Scheduled Date</span>
+                                        <strong style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>📅 {trackResult.date}</strong>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc', paddingBottom: '10px' }}>
+                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>Consultation Slot</span>
+                                        <strong style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>🕒 {trackResult.time}</strong>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px', gap: '16px' }}>
+                                        <span style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 600, flexShrink: 0 }}>Medical Concern</span>
+                                        <strong style={{ color: '#0284c7', fontSize: '0.95rem', fontWeight: 700, textAlign: 'right', wordBreak: 'break-word', maxWidth: '65%' }}>
+                                            {trackResult.department}
+                                        </strong>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -323,7 +505,7 @@ export default function Home() {
             {/* Booking Section */}
             <section id="appointment" className="section" style={{ borderTop: 'none' }}>
                 <div className="container">
-                    <h2 className="section-title">Book Consultation</h2>
+                    <h2 className="section-title">Book Consultation<span className="title-dot">.</span></h2>
                     <div className="glass-panel clinical-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
                         <form onSubmit={handleSubmit}>
                             {step === 1 && (
@@ -331,7 +513,7 @@ export default function Home() {
                                     <div className="form-group">
                                         <label>Medical Department</label>
                                         <select className="form-control" required value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
-                                            <option value="" disabled>Select Concern &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
+                                            <option value="" disabled>Select Concern</option>
                                             <option value="General Checkup">General Checkup</option>
                                             <option value="Fever">Fever / Infection</option>
                                             <option value="Diabetes">Diabetes Follow-up</option>
@@ -339,12 +521,12 @@ export default function Home() {
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Date</label>
-                                        <input type={dateType} placeholder="Select Date" onFocus={() => setDateType('date')} onBlur={(e) => {if(!e.target.value) setDateType('text')}} className="form-control" required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                                        <input type="date" className={`form-control ${!formData.date ? "date-placeholder" : ""}`} required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                                     </div>
                                     <div className="form-group">
                                         <label>Preferred Time Slot</label>
                                         <select className="form-control" required value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})}>
-                                            <option value="" disabled>Select Time Slot &nbsp;&nbsp;&nbsp;&nbsp;</option>
+                                            <option value="" disabled>Select Time Slot</option>
                                             <option value="Morning">Morning (10:00 AM - 1:00 PM)</option>
                                             <option value="Evening">Evening (6:00 PM - 9:00 PM)</option>
                                         </select>
@@ -361,12 +543,12 @@ export default function Home() {
                                     </div>
                                     <div className="form-group">
                                         <label>Contact Number</label>
-                                        <input type="tel" className="form-control" placeholder="10-digit mobile number" pattern="[0-9]{10}" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                        <input type="tel" className="form-control" placeholder="10-digit mobile number" pattern="[0-9]{10}" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} />
                                     </div>
                                     <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
-                                        <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setStep(1)}>Back</button>
-                                        <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={isSubmitting}>
-                                            {isSubmitting ? 'Processing...' : 'Confirm Appointment'}
+                                        <button type="button" className="btn btn-secondary" style={{ flex: 1, width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => setStep(1)}>Back</button>
+                                        <button type="submit" className="btn btn-primary" style={{ flex: 1, width: '100%', display: 'flex', justifyContent: 'center' }} disabled={isSubmitting}>
+                                            {isSubmitting ? 'Processing...' : 'Confirm'}
                                         </button>
                                     </div>
                                 </div>
