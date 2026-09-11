@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { HeartPulse, Stethoscope, Droplet, Clock, ChevronRight, ChevronDown, Activity, Search, CheckCircle, PhoneCall, ShieldCheck, Award, Copy, X } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 const Typewriter = () => {
     const text1 = "Advanced";
@@ -233,7 +234,7 @@ export default function Home() {
                 phone: sanitizedPhone,
                 createdAt: bookingCreatedAt
             };
-            const response = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', payload);
+            const response = await axios.post(`${API_BASE_URL}/api/appointments`, payload);
             const newTrackId = response.data.trackingId;
 
             setBookingResult({
@@ -270,7 +271,7 @@ export default function Home() {
             } catch (e) {}
 
             // Fetch initial status
-            axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${newTrackId}`)
+            axios.get(`${API_BASE_URL}/api/appointments/track/${newTrackId}`)
                 .then(res => setTrackResult(res.data.appointment))
                 .catch(() => {});
 
@@ -281,7 +282,7 @@ export default function Home() {
                 // If rate limited, wait 1 second and retry once
                 await new Promise(res => setTimeout(res, 1000));
                 try {
-                    const retryResp = await axios.post('https://doctor-s-backend-2.onrender.com/api/appointments', payload);
+                    const retryResp = await axios.post(`${API_BASE_URL}/api/appointments`, payload);
                     const newTrackId = retryResp.data.trackingId;
                     setBookingResult({ name: formData.patientName, trackingId: newTrackId });
                     setTrackId(newTrackId);
@@ -304,7 +305,7 @@ export default function Home() {
     useEffect(() => {
         const saved = localStorage.getItem('savedTrackId');
         if (saved) {
-            axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${saved}`)
+            axios.get(`${API_BASE_URL}/api/appointments/track/${saved}`)
                 .then(res => {
                     if (res.data && res.data.appointment) {
                         setTrackResult(res.data.appointment);
@@ -320,7 +321,7 @@ export default function Home() {
 
         const pollLiveStatus = async () => {
             try {
-                const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${trackId.trim()}`);
+                const res = await axios.get(`${API_BASE_URL}/api/appointments/track/${trackId.trim()}`);
                 if (res.data && res.data.appointment) {
                     setTrackResult(res.data.appointment);
                     setTrackError('');
@@ -340,7 +341,7 @@ export default function Home() {
         if (!cleanId) return;
         setTrackError('');
         try {
-            const response = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments/track/${cleanId}`);
+            const response = await axios.get(`${API_BASE_URL}/api/appointments/track/${cleanId}`);
             setTrackResult(response.data.appointment);
             localStorage.setItem('savedTrackId', cleanId);
         } catch (err) {

@@ -77,8 +77,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: false
 }));
-app.options('*', cors());
-
 app.use(express.json({ limit: '10kb' }));
 
 // 3. HEALTH CHECK & RATE LIMITING

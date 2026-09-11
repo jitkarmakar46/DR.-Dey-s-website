@@ -7,6 +7,7 @@ import {
     Sparkles, AlertCircle, RefreshCw, Phone, Copy, Check, ChevronRight,
     CalendarCheck, UserCheck, Stethoscope
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 // Universal helper to normalize any date string format into YYYY-MM-DD
 const normalizeDateStr = (rawDate) => {
@@ -191,7 +192,7 @@ export default function AdminDashboard() {
                         onProgress(`Syncing with server database... (${attempt}/${maxAttempts})`);
                     }
 
-                    const res = await axios.get(`https://doctor-s-backend-2.onrender.com/api/appointments?_t=${Date.now()}`, {
+                    const res = await axios.get(`${API_BASE_URL}/api/appointments?_t=${Date.now()}`, {
                         headers: { Authorization: `Bearer ${activeToken}` },
                         timeout: 25000
                     });
@@ -226,7 +227,7 @@ export default function AdminDashboard() {
                         setAppointments(mergedList);
 
                         if (missingOnBackend.length > 0) {
-                            axios.post('https://doctor-s-backend-2.onrender.com/api/appointments/sync', {
+                            axios.post(`${API_BASE_URL}/api/appointments/sync`, {
                                 appointments: missingOnBackend
                             }, {
                                 headers: { Authorization: `Bearer ${activeToken}` }
@@ -315,7 +316,7 @@ export default function AdminDashboard() {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('https://doctor-s-backend-2.onrender.com/api/login', { password });
+            const res = await axios.post(`${API_BASE_URL}/api/login`, { password });
             setToken(res.data.token);
             setPassword('');
             setLoginError('');
@@ -331,7 +332,7 @@ export default function AdminDashboard() {
             return updated;
         });
         try {
-            await axios.put(`https://doctor-s-backend-2.onrender.com/api/appointments/${id}/status`, { status }, {
+            await axios.put(`${API_BASE_URL}/api/appointments/${id}/status`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (err) {
@@ -351,7 +352,7 @@ export default function AdminDashboard() {
             return updated;
         });
         try {
-            await axios.delete(`https://doctor-s-backend-2.onrender.com/api/appointments/${id}`, {
+            await axios.delete(`${API_BASE_URL}/api/appointments/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
         } catch (err) {

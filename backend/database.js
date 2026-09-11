@@ -23,8 +23,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
         )`, () => {
             // Safe migration: Add trackingId column if missing (ignore error if already exists)
             db.run(`ALTER TABLE appointments ADD COLUMN trackingId TEXT UNIQUE`, () => {});
-            // Safe migration: Add createdAt column if missing (existing rows get current timestamp as fallback)
-            db.run(`ALTER TABLE appointments ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
+            // Safe migration: Add createdAt column if missing
+            db.run(`ALTER TABLE appointments ADD COLUMN createdAt TEXT`, () => {});
 
             // Seed initial clinic appointments if table is empty
             db.get(`SELECT COUNT(*) as count FROM appointments`, [], (err, row) => {
